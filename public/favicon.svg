@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Casa Mimosa">
+  <rect width="64" height="64" rx="32" fill="#253B2D"/>
+  <path d="M18 40V26l14-10 14 10v14h-8v-9H26v9h-8Z" fill="#F8F2E8"/>
+  <path d="M24 44h16" stroke="#C4A66A" stroke-width="4" stroke-linecap="round"/>
+</svg>

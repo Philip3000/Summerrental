@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --header-height: 76px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #fffdf8 0%, #f8f2e8 42%, #f4eadc 100%);
+  color: #20251e;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(196, 166, 106, 0.34);
+  color: #20251e;
+}
+
+input[type="date"] {
+  color-scheme: light;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.section-shell {
+  margin-inline: auto;
+  width: min(100% - 2rem, 1180px);
+}
+
+.premium-rule {
+  background: linear-gradient(90deg, transparent, rgba(196, 166, 106, 0.72), transparent);
+  height: 1px;
+}
+
+@media (min-width: 768px) {
+  .section-shell {
+    width: min(100% - 4rem, 1180px);
+  }
+}
