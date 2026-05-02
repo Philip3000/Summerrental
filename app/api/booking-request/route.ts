@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { resolveAccessCodeKind } from "@/lib/accessCodeStore";
-import { createBooking } from "@/lib/bookingStore";
+import { createBooking, getSiteContent } from "@/lib/bookingStore";
 import { calculateStayEstimate } from "@/lib/pricing";
 import { bookingRequestSchema } from "@/lib/validation";
 import type { BookingRequestPayload } from "@/types/booking";
@@ -36,7 +36,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const estimate = calculateStayEstimate(parsed.data.arrivalDate, parsed.data.departureDate);
+  const siteContent = await getSiteContent();
+  const estimate = calculateStayEstimate(
+    parsed.data.arrivalDate,
+    parsed.data.departureDate,
+    siteContent.pricing,
+  );
   const bookingType =
     privateAccessKind === "family"
       ? "private_reservation"

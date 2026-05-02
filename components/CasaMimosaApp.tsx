@@ -12,7 +12,6 @@ import LocationSection from "@/components/LocationSection";
 import Pricing from "@/components/Pricing";
 import VillaOverview from "@/components/VillaOverview";
 import type { Language } from "@/lib/i18n";
-import { getCopy } from "@/lib/i18n";
 import type { SiteContent } from "@/types/site";
 
 type CasaMimosaAppProps = {
@@ -22,7 +21,7 @@ type CasaMimosaAppProps = {
 
 export default function CasaMimosaApp({ siteContent, today }: CasaMimosaAppProps) {
   const [language, setLanguage] = useState<Language>("da");
-  const content = getCopy(language);
+  const content = siteContent.copy[language];
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -42,8 +41,13 @@ export default function CasaMimosaApp({ siteContent, today }: CasaMimosaAppProps
         <Gallery content={content} language={language} siteContent={siteContent} />
         <Amenities content={content} />
         <LocationSection content={content} language={language} siteContent={siteContent} />
-        <Pricing content={content} language={language} />
-        <BookingSection content={content} language={language} today={today} />
+        <Pricing content={content} language={language} pricing={siteContent.pricing} />
+        <BookingSection
+          content={content}
+          language={language}
+          pricing={siteContent.pricing}
+          today={today}
+        />
       </main>
       <Footer content={content} />
     </>

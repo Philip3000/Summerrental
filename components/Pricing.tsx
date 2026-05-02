@@ -1,12 +1,14 @@
 import type { Language, SiteCopy } from "@/lib/i18n";
-import { formatDkk, seasonPricing } from "@/lib/pricing";
+import { formatDkk } from "@/lib/pricing";
+import type { SeasonPrice } from "@/lib/pricing";
 
 type PricingProps = {
   content: SiteCopy;
   language: Language;
+  pricing: SeasonPrice[];
 };
 
-export default function Pricing({ content, language }: PricingProps) {
+export default function Pricing({ content, language, pricing }: PricingProps) {
   return (
     <section id="pricing" className="bg-olive py-20 text-ivory md:py-28">
       <div className="section-shell">
@@ -25,7 +27,7 @@ export default function Pricing({ content, language }: PricingProps) {
         </div>
 
         <div className="mt-12 grid gap-4 md:grid-cols-4">
-          {seasonPricing.map((season) => (
+          {pricing.map((season) => (
             <article
               key={season.key}
               className="rounded-[8px] border border-ivory/14 bg-ivory/[0.07] p-6 shadow-line backdrop-blur"

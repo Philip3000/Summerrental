@@ -1,7 +1,11 @@
 import { Car, MapPin, Plane, Utensils } from "lucide-react";
 import Image from "next/image";
 import type { Language, SiteCopy } from "@/lib/i18n";
-import { getSiteImage } from "@/lib/siteContent";
+import {
+  getImageObjectPosition,
+  getSectionImageMinHeight,
+  getSiteImage,
+} from "@/lib/siteContent";
 import type { SiteContent } from "@/types/site";
 
 type LocationSectionProps = {
@@ -40,13 +44,17 @@ export default function LocationSection({ content, language, siteContent }: Loca
           </div>
         </div>
 
-        <div className="relative min-h-[420px] overflow-hidden rounded-[8px] bg-olive shadow-soft md:min-h-[560px]">
+        <div
+          className="relative overflow-hidden rounded-[8px] bg-olive shadow-soft"
+          style={{ minHeight: getSectionImageMinHeight(image) }}
+        >
           <Image
             src={image?.src ?? ""}
             alt={image?.alt[language] ?? "Costa del Sol coastline near Fuengirola and Mijas"}
             fill
             sizes="(min-width: 1024px) 42vw, 100vw"
             className="object-cover"
+            style={{ objectPosition: getImageObjectPosition(image) }}
           />
         </div>
       </div>

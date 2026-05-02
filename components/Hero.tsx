@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import type { Language, SiteCopy } from "@/lib/i18n";
-import { getSiteImage } from "@/lib/siteContent";
+import { getHeroMinHeight, getImageObjectPosition, getSiteImage } from "@/lib/siteContent";
 import type { SiteContent } from "@/types/site";
 
 type HeroProps = {
@@ -14,7 +14,10 @@ export default function Hero({ content, language, siteContent }: HeroProps) {
   const heroImage = getSiteImage(siteContent, "hero");
 
   return (
-    <section className="relative flex min-h-[88svh] items-end overflow-hidden bg-olive pt-[var(--header-height)] text-ivory">
+    <section
+      className="relative flex items-end overflow-hidden bg-olive pt-[var(--header-height)] text-ivory"
+      style={{ minHeight: getHeroMinHeight(heroImage) }}
+    >
       <Image
         src={heroImage?.src ?? ""}
         alt={heroImage?.alt[language] ?? "Casa Mimosa private villa"}
@@ -22,6 +25,7 @@ export default function Hero({ content, language, siteContent }: HeroProps) {
         priority
         sizes="100vw"
         className="object-cover"
+        style={{ objectPosition: getImageObjectPosition(heroImage) }}
       />
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(32,37,30,0.76),rgba(32,37,30,0.36)_46%,rgba(32,37,30,0.2)),linear-gradient(180deg,rgba(32,37,30,0.2),rgba(32,37,30,0.68))]" />
 

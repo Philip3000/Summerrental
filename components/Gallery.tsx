@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { Language, SiteCopy } from "@/lib/i18n";
+import { getGalleryLayoutClass, getImageObjectPosition } from "@/lib/siteContent";
 import type { SiteContent } from "@/types/site";
 
 type GalleryProps = {
@@ -31,19 +32,21 @@ export default function Gallery({ content, language, siteContent }: GalleryProps
         <div className="mt-12 grid auto-rows-[260px] gap-4 md:grid-cols-4 md:auto-rows-[220px] lg:auto-rows-[260px]">
           {galleryImages.map((image, index) => (
             <figure
-              key={image.src}
+              key={image.slot}
               className={[
                 "relative overflow-hidden rounded-[8px] bg-sand shadow-line",
-                index === 0 ? "md:col-span-2 md:row-span-2" : "",
-                index === 4 ? "md:col-span-2" : "",
+                getGalleryLayoutClass(image),
               ].join(" ")}
             >
               <Image
                 src={image.src}
                 alt={image.alt[language]}
                 fill
-                sizes={index === 0 ? "(min-width: 768px) 50vw, 100vw" : "50vw"}
+                sizes={index === 0 || image.presentation.galleryLayout === "feature"
+                  ? "(min-width: 768px) 50vw, 100vw"
+                  : "50vw"}
                 className="object-cover transition duration-700 hover:scale-[1.025]"
+                style={{ objectPosition: getImageObjectPosition(image) }}
               />
             </figure>
           ))}

@@ -301,7 +301,7 @@ export async function getSiteContent() {
   return mergeSiteContent(siteContentDoc.exists() ? (siteContentDoc.data() as Partial<SiteContent>) : null);
 }
 
-export async function updateSiteContent(content: SiteContent) {
+export async function updateSiteContent(content: Partial<SiteContent>) {
   const merged = mergeSiteContent(content);
   const updated = {
     ...merged,

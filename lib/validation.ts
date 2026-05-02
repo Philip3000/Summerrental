@@ -47,6 +47,14 @@ const siteImageSlotSchema = z.enum([
   "gallery-5",
 ]);
 
+const siteImageHeightSchema = z.enum(["compact", "standard", "tall", "cinematic"]);
+const siteImageLayoutSchema = z.enum(["standard", "feature", "wide", "tall"]);
+
+const localizedTextSchema = z.object({
+  da: z.string().trim().min(1).max(500),
+  en: z.string().trim().min(1).max(500),
+});
+
 export const siteContentSchema = z.object({
   images: z
     .array(
@@ -58,9 +66,35 @@ export const siteContentSchema = z.object({
           da: z.string().trim().min(1).max(300),
           en: z.string().trim().min(1).max(300),
         }),
+        presentation: z
+          .object({
+            focalX: z.coerce.number().min(0).max(100),
+            focalY: z.coerce.number().min(0).max(100),
+            height: siteImageHeightSchema,
+            galleryLayout: siteImageLayoutSchema,
+          }),
       }),
     )
-    .min(1),
+    .min(1)
+    .optional(),
+  copy: z
+    .object({
+      da: z.unknown(),
+      en: z.unknown(),
+    })
+    .optional(),
+  pricing: z
+    .array(
+      z.object({
+        key: z.enum(["low", "mid", "high", "peak"]),
+        dkkPerDay: z.coerce.number().int().min(0).max(50000),
+        months: z.array(z.coerce.number().int().min(1).max(12)).min(1).max(12),
+        label: localizedTextSchema,
+        period: localizedTextSchema,
+      }),
+    )
+    .length(4)
+    .optional(),
 });
 
 export const accessCodeCreateSchema = z.object({

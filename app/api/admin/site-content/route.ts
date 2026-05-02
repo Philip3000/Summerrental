@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/apiAuth";
 import { getSiteContent, updateSiteContent } from "@/lib/bookingStore";
 import { siteContentSchema } from "@/lib/validation";
+import type { SiteContent } from "@/types/site";
 
 export const runtime = "nodejs";
 
@@ -27,10 +28,10 @@ export async function PUT(request: Request) {
 
   if (!parsed.success) {
     return NextResponse.json(
-      { success: false, error: "Invalid image content.", issues: parsed.error.flatten() },
+      { success: false, error: "Invalid site content.", issues: parsed.error.flatten() },
       { status: 400 },
     );
   }
 
-  return NextResponse.json(await updateSiteContent(parsed.data));
+  return NextResponse.json(await updateSiteContent(parsed.data as Partial<SiteContent>));
 }

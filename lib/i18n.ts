@@ -324,8 +324,19 @@ export const copy = {
   },
 } as const;
 
-export type SiteCopy = (typeof copy)[Language];
+type DeepEditable<T> = T extends string
+  ? string
+  : T extends number
+    ? number
+    : T extends readonly (infer Item)[]
+      ? DeepEditable<Item>[]
+      : T extends object
+        ? { -readonly [Key in keyof T]: DeepEditable<T[Key]> }
+        : T;
+
+export type SiteCopy = DeepEditable<(typeof copy)["da"]>;
+export type SiteCopyByLanguage = Record<Language, SiteCopy>;
 
 export function getCopy(language: Language): SiteCopy {
-  return copy[language];
+  return copy[language] as unknown as SiteCopy;
 }

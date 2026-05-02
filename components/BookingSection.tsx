@@ -5,12 +5,14 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import BookingCalendar from "@/components/BookingCalendar";
 import { rangesOverlap } from "@/lib/dateRanges";
 import type { Language, SiteCopy } from "@/lib/i18n";
-import { calculateStayEstimate, formatDkk, seasonPricing } from "@/lib/pricing";
+import { calculateStayEstimate, formatDkk } from "@/lib/pricing";
+import type { SeasonPrice } from "@/lib/pricing";
 import type { BookingStatus, PublicAvailabilityPeriod } from "@/types/booking";
 
 type BookingSectionProps = {
   content: SiteCopy;
   language: Language;
+  pricing: SeasonPrice[];
   today: string;
 };
 
@@ -23,6 +25,7 @@ type SubmitState =
 export default function BookingSection({
   content,
   language,
+  pricing,
   today,
 }: BookingSectionProps) {
   const [arrivalDate, setArrivalDate] = useState("");
@@ -36,8 +39,8 @@ export default function BookingSection({
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
 
   const estimate = useMemo(
-    () => calculateStayEstimate(arrivalDate, departureDate),
-    [arrivalDate, departureDate],
+    () => calculateStayEstimate(arrivalDate, departureDate, pricing),
+    [arrivalDate, departureDate, pricing],
   );
   const estimatedPrice = estimate.total;
   const hasDateError = Boolean(arrivalDate && departureDate && estimate.nights === 0);
@@ -152,7 +155,7 @@ export default function BookingSection({
             {estimate.breakdown.length > 0 ? (
               <div className="mt-5 space-y-2 border-t border-olive/10 pt-4">
                 {estimate.breakdown.map((line) => {
-                  const season = seasonPricing.find((item) => item.key === line.season);
+                  const season = pricing.find((item) => item.key === line.season);
 
                   return (
                     <div className="flex justify-between gap-4 text-sm text-ink/62" key={line.season}>

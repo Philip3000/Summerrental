@@ -1,7 +1,11 @@
 import { Leaf, ShieldCheck, Sun } from "lucide-react";
 import Image from "next/image";
 import type { Language, SiteCopy } from "@/lib/i18n";
-import { getSiteImage } from "@/lib/siteContent";
+import {
+  getImageObjectPosition,
+  getSectionImageMinHeight,
+  getSiteImage,
+} from "@/lib/siteContent";
 import type { SiteContent } from "@/types/site";
 
 type ExperienceSectionProps = {
@@ -22,13 +26,17 @@ export default function ExperienceSection({
   return (
     <section className="bg-ivory py-20 md:py-28">
       <div className="section-shell grid gap-10 lg:grid-cols-[0.82fr_1fr] lg:items-center">
-        <div className="relative min-h-[520px] overflow-hidden rounded-[8px] bg-olive shadow-soft">
+        <div
+          className="relative overflow-hidden rounded-[8px] bg-olive shadow-soft"
+          style={{ minHeight: getSectionImageMinHeight(image) }}
+        >
           <Image
             src={image?.src ?? ""}
             alt={image?.alt[language] ?? "Warm designer villa interior"}
             fill
             sizes="(min-width: 1024px) 42vw, 100vw"
             className="object-cover"
+            style={{ objectPosition: getImageObjectPosition(image) }}
           />
           <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-ink/46 to-transparent" />
         </div>

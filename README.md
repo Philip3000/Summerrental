@@ -96,8 +96,11 @@ Codes are managed in `/admin` and stored in Firestore as SHA-256 hashes, not pla
 - See active reserved/booked date blocks.
 - Approve, deny, or cancel bookings.
 - Create or delete friend/family access codes.
+- Edit all frontpage text in Danish and English.
+- Edit seasonal DKK pricing and the months assigned to each season.
 - Upload or paste image URLs for hero, gallery, location, and interior images.
-- Save site-wide image content to Firestore.
+- Adjust image crop focus, section image size, and gallery layout presets.
+- Save site-wide frontpage content to Firestore.
 
 ## Firebase Rules
 
@@ -162,6 +165,7 @@ Set the same environment variables as Vercel.
 - Bilingual copy: `lib/i18n.ts`
 - Default image slots: `lib/siteContent.ts`
 - Season pricing: `lib/pricing.ts`
+- Live frontpage content in production: `/admin`, saved to Firestore `siteContent/main`
 - Booking storage and site content storage: `lib/bookingStore.ts`
 - Public booking API: `app/api/booking-request/route.ts`
 - Admin APIs: `app/api/admin/*`
@@ -173,6 +177,6 @@ The reported `data-lastpass-icon-root` hydration warning is caused by the LastPa
 ## Still To Customize
 
 - Replace placeholder images with real Casa Mimosa photos via `/admin`.
-- Confirm real prices and season boundaries.
+- Confirm real prices, season month assignments, and all frontpage copy via `/admin`.
 - Set final admin users in Firebase Auth and create production friend/family codes in `/admin`.
 - Add production email notifications in `app/api/booking-request/route.ts` if desired.
