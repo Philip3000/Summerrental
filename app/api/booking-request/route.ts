@@ -1,10 +1,6 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import {
-  FAMILY_ACCESS_COOKIE,
-  getConfiguredFamilyCode,
-  isFamilyAccessTokenValid,
-} from "@/lib/familyAccess";
+import { resolveAccessCodeKind } from "@/lib/accessCodeStore";
+import { createBooking } from "@/lib/bookingStore";
 import { calculateStayEstimate } from "@/lib/pricing";
 import { bookingRequestSchema } from "@/lib/validation";
 import type { BookingRequestPayload } from "@/types/booking";
@@ -26,24 +22,34 @@ export async function POST(request: Request) {
     );
   }
 
-  const configuredCode = getConfiguredFamilyCode();
-  const cookieStore = await cookies();
-  const familyToken = cookieStore.get(FAMILY_ACCESS_COOKIE)?.value;
-  const familyAccessUnlocked =
-    Boolean(configuredCode) && isFamilyAccessTokenValid(familyToken, configuredCode);
+  const privateCode = parsed.data.privateCode.trim();
+  const privateAccessKind = await resolveAccessCodeKind(privateCode);
 
-  if (parsed.data.familyAccessUnlocked && !familyAccessUnlocked) {
+  if (privateCode && privateAccessKind === "none") {
     return NextResponse.json(
       {
         success: false,
-        error: "Family access is no longer active. Please validate the code again.",
+        code: "INVALID_PRIVATE_CODE",
+        error: "The private code could not be used. Please check the code or send without it.",
       },
-      { status: 403 },
+      { status: 400 },
     );
   }
 
   const estimate = calculateStayEstimate(parsed.data.arrivalDate, parsed.data.departureDate);
-  const bookingType = familyAccessUnlocked ? "family_reservation" : "public_request";
+  const bookingType =
+    privateAccessKind === "family"
+      ? "private_reservation"
+      : privateAccessKind === "friend"
+        ? "friend_rental"
+        : "public_request";
+  const requiresApproval = privateAccessKind !== "family";
+  const status =
+    privateAccessKind === "family"
+      ? "booked"
+      : privateAccessKind === "friend"
+        ? "reserved"
+        : "inquiry";
 
   const bookingRequest: BookingRequestPayload = {
     language: parsed.data.language,
@@ -53,12 +59,39 @@ export async function POST(request: Request) {
     departureDate: parsed.data.departureDate,
     guests: parsed.data.guests,
     message: parsed.data.message ?? "",
-    estimatedPrice: familyAccessUnlocked ? 0 : estimate.total,
-    familyAccessUnlocked,
+    estimatedPriceDkk: privateAccessKind === "family" ? 0 : estimate.total,
+    privateAccessKind,
+    requiresApproval,
     bookingType,
   };
 
   const reference = `CM-${Date.now().toString(36).toUpperCase()}`;
+  const now = new Date().toISOString();
+  let booking;
+
+  try {
+    booking = await createBooking({
+      ...bookingRequest,
+      reference,
+      status,
+      nights: estimate.nights,
+      createdAt: now,
+      updatedAt: now,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "DATES_NOT_AVAILABLE") {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "DATES_NOT_AVAILABLE",
+          error: "The selected dates are no longer available.",
+        },
+        { status: 409 },
+      );
+    }
+
+    throw error;
+  }
 
   if (process.env.NODE_ENV !== "production") {
     console.info("[Casa Mimosa] Booking request", {
@@ -73,8 +106,9 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     success: true,
+    id: booking.id,
     reference,
     bookingType,
-    estimatedPrice: bookingRequest.estimatedPrice,
+    status,
   });
 }

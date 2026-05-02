@@ -1,18 +1,23 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
-import type { SiteCopy } from "@/lib/i18n";
+import type { Language, SiteCopy } from "@/lib/i18n";
+import { getSiteImage } from "@/lib/siteContent";
+import type { SiteContent } from "@/types/site";
 
 type HeroProps = {
   content: SiteCopy;
-  onFamilyAccessClick: () => void;
+  language: Language;
+  siteContent: SiteContent;
 };
 
-export default function Hero({ content, onFamilyAccessClick }: HeroProps) {
+export default function Hero({ content, language, siteContent }: HeroProps) {
+  const heroImage = getSiteImage(siteContent, "hero");
+
   return (
     <section className="relative flex min-h-[88svh] items-end overflow-hidden bg-olive pt-[var(--header-height)] text-ivory">
       <Image
-        src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=2200&q=88"
-        alt="Casa Mimosa style Mediterranean villa with private pool"
+        src={heroImage?.src ?? ""}
+        alt={heroImage?.alt[language] ?? "Casa Mimosa private villa"}
         fill
         priority
         sizes="100vw"
@@ -44,13 +49,12 @@ export default function Hero({ content, onFamilyAccessClick }: HeroProps) {
             >
               {content.hero.primaryCta}
             </a>
-            <button
-              type="button"
-              onClick={onFamilyAccessClick}
+            <a
+              href="#villa"
               className="inline-flex h-12 items-center justify-center rounded-full border border-ivory/40 bg-ivory/10 px-6 text-sm font-bold text-ivory backdrop-blur transition hover:bg-ivory/18 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ivory"
             >
-              {content.hero.familyCta}
-            </button>
+              {content.hero.secondaryCta}
+            </a>
           </div>
         </motion.div>
 

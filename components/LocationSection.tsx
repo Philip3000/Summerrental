@@ -1,14 +1,20 @@
 import { Car, MapPin, Plane, Utensils } from "lucide-react";
 import Image from "next/image";
-import type { SiteCopy } from "@/lib/i18n";
+import type { Language, SiteCopy } from "@/lib/i18n";
+import { getSiteImage } from "@/lib/siteContent";
+import type { SiteContent } from "@/types/site";
 
 type LocationSectionProps = {
   content: SiteCopy;
+  language: Language;
+  siteContent: SiteContent;
 };
 
 const icons = [MapPin, Utensils, Car, Plane];
 
-export default function LocationSection({ content }: LocationSectionProps) {
+export default function LocationSection({ content, language, siteContent }: LocationSectionProps) {
+  const image = getSiteImage(siteContent, "location");
+
   return (
     <section id="location" className="bg-porcelain py-20 md:py-28">
       <div className="section-shell grid gap-10 lg:grid-cols-[1fr_0.86fr] lg:items-center">
@@ -36,8 +42,8 @@ export default function LocationSection({ content }: LocationSectionProps) {
 
         <div className="relative min-h-[420px] overflow-hidden rounded-[8px] bg-olive shadow-soft md:min-h-[560px]">
           <Image
-            src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1500&q=86"
-            alt="Costa del Sol coastline near Fuengirola and Mijas"
+            src={image?.src ?? ""}
+            alt={image?.alt[language] ?? "Costa del Sol coastline near Fuengirola and Mijas"}
             fill
             sizes="(min-width: 1024px) 42vw, 100vw"
             className="object-cover"

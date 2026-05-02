@@ -1,13 +1,16 @@
 import Image from "next/image";
 import type { Language, SiteCopy } from "@/lib/i18n";
-import { galleryImages } from "@/lib/i18n";
+import type { SiteContent } from "@/types/site";
 
 type GalleryProps = {
   content: SiteCopy;
   language: Language;
+  siteContent: SiteContent;
 };
 
-export default function Gallery({ content, language }: GalleryProps) {
+export default function Gallery({ content, language, siteContent }: GalleryProps) {
+  const galleryImages = siteContent.images.filter((image) => image.slot.startsWith("gallery-"));
+
   return (
     <section id="gallery" className="bg-porcelain py-20 md:py-28">
       <div className="section-shell">

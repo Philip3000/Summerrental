@@ -1,5 +1,5 @@
 import type { Language, SiteCopy } from "@/lib/i18n";
-import { seasonPricing } from "@/lib/pricing";
+import { formatDkk, seasonPricing } from "@/lib/pricing";
 
 type PricingProps = {
   content: SiteCopy;
@@ -33,7 +33,7 @@ export default function Pricing({ content, language }: PricingProps) {
               <p className="text-sm text-champagne">{season.label[language]}</p>
               <p className="mt-3 text-sm text-ivory/58">{season.period[language]}</p>
               <p className="mt-8 font-serif text-4xl text-ivory">
-                {content.pricing.from} EUR {season.eurPerDay}
+                {content.pricing.from} {formatDkk(season.dkkPerDay)}
               </p>
               <p className="mt-2 text-sm text-ivory/58">/ {content.pricing.perDay}</p>
             </article>

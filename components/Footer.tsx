@@ -2,10 +2,9 @@ import type { SiteCopy } from "@/lib/i18n";
 
 type FooterProps = {
   content: SiteCopy;
-  onFamilyAccessClick: () => void;
 };
 
-export default function Footer({ content, onFamilyAccessClick }: FooterProps) {
+export default function Footer({ content }: FooterProps) {
   return (
     <footer className="bg-dusk py-12 text-ivory">
       <div className="section-shell flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
@@ -20,13 +19,6 @@ export default function Footer({ content, onFamilyAccessClick }: FooterProps) {
           >
             {content.footer.booking}
           </a>
-          <button
-            type="button"
-            onClick={onFamilyAccessClick}
-            className="inline-flex h-11 items-center justify-center rounded-full border border-ivory/24 px-5 text-sm font-bold text-ivory transition hover:bg-ivory/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ivory"
-          >
-            {content.footer.family}
-          </button>
         </div>
       </div>
     </footer>

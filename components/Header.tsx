@@ -5,14 +5,12 @@ type HeaderProps = {
   content: SiteCopy;
   language: Language;
   onLanguageChange: (language: Language) => void;
-  onFamilyAccessClick: () => void;
 };
 
 export default function Header({
   content,
   language,
   onLanguageChange,
-  onFamilyAccessClick,
 }: HeaderProps) {
   const navItems = [
     ["#villa", content.nav.villa],
@@ -52,13 +50,6 @@ export default function Header({
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <LanguageToggle language={language} onLanguageChange={onLanguageChange} />
-          <button
-            type="button"
-            onClick={onFamilyAccessClick}
-            className="hidden h-10 rounded-full border border-olive/15 bg-olive px-4 text-sm font-semibold text-ivory shadow-line transition hover:bg-dusk focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-champagne sm:inline-flex sm:items-center"
-          >
-            {content.hero.familyCta}
-          </button>
         </div>
       </div>
     </header>

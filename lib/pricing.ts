@@ -1,10 +1,11 @@
-import { addDays, differenceInCalendarDays, isValid, parseISO } from "date-fns";
+import { addDays } from "date-fns";
+import { getNights, parseDateInput } from "@/lib/dateRanges";
 
 export type SeasonKey = "low" | "mid" | "high" | "peak";
 
 export type SeasonPrice = {
   key: SeasonKey;
-  eurPerDay: number;
+  dkkPerDay: number;
   label: {
     da: string;
     en: string;
@@ -18,25 +19,25 @@ export type SeasonPrice = {
 export const seasonPricing: SeasonPrice[] = [
   {
     key: "low",
-    eurPerDay: 350,
+    dkkPerDay: 2600,
     label: { da: "Lavsæson", en: "Low season" },
     period: { da: "November til marts", en: "November to March" },
   },
   {
     key: "mid",
-    eurPerDay: 475,
+    dkkPerDay: 3500,
     label: { da: "Mellemsæson", en: "Mid season" },
     period: { da: "April, maj og oktober", en: "April, May and October" },
   },
   {
     key: "high",
-    eurPerDay: 650,
+    dkkPerDay: 4850,
     label: { da: "Højsæson", en: "High season" },
     period: { da: "Juni og september", en: "June and September" },
   },
   {
     key: "peak",
-    eurPerDay: 800,
+    dkkPerDay: 6000,
     label: { da: "Peaksæson", en: "Peak season" },
     period: { da: "Juli og august", en: "July and August" },
   },
@@ -45,7 +46,7 @@ export const seasonPricing: SeasonPrice[] = [
 export type PriceBreakdownLine = {
   season: SeasonKey;
   nights: number;
-  eurPerDay: number;
+  dkkPerDay: number;
   subtotal: number;
 };
 
@@ -55,13 +56,12 @@ export type StayEstimate = {
   breakdown: PriceBreakdownLine[];
 };
 
-export function parseDateInput(value: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return null;
-  }
-
-  const date = parseISO(`${value}T00:00:00`);
-  return isValid(date) ? date : null;
+export function formatDkk(value: number) {
+  return new Intl.NumberFormat("da-DK", {
+    style: "currency",
+    currency: "DKK",
+    maximumFractionDigits: 0,
+  }).format(value);
 }
 
 export function getSeasonForDate(date: Date): SeasonKey {
@@ -83,7 +83,7 @@ export function getSeasonForDate(date: Date): SeasonKey {
 }
 
 export function getPriceForSeason(season: SeasonKey) {
-  return seasonPricing.find((item) => item.key === season)?.eurPerDay ?? 0;
+  return seasonPricing.find((item) => item.key === season)?.dkkPerDay ?? 0;
 }
 
 export function calculateStayEstimate(arrivalDate: string, departureDate: string): StayEstimate {
@@ -94,7 +94,7 @@ export function calculateStayEstimate(arrivalDate: string, departureDate: string
     return { nights: 0, total: 0, breakdown: [] };
   }
 
-  const nights = differenceInCalendarDays(departure, arrival);
+  const nights = getNights(arrivalDate, departureDate);
 
   if (nights <= 0) {
     return { nights: 0, total: 0, breakdown: [] };
@@ -105,16 +105,16 @@ export function calculateStayEstimate(arrivalDate: string, departureDate: string
   for (let nightIndex = 0; nightIndex < nights; nightIndex += 1) {
     const night = addDays(arrival, nightIndex);
     const season = getSeasonForDate(night);
-    const eurPerDay = getPriceForSeason(season);
+    const dkkPerDay = getPriceForSeason(season);
     const current = breakdownBySeason.get(season) ?? {
       season,
       nights: 0,
-      eurPerDay,
+      dkkPerDay,
       subtotal: 0,
     };
 
     current.nights += 1;
-    current.subtotal += eurPerDay;
+    current.subtotal += dkkPerDay;
     breakdownBySeason.set(season, current);
   }
 

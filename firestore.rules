@@ -1,0 +1,47 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isServer() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/serverRoles/$(request.auth.uid));
+    }
+
+    match /admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    match /serverRoles/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    match /bookings/{bookingId} {
+      allow read, write: if isServer() || isAdmin();
+    }
+
+    match /calendar/{documentId} {
+      allow read: if documentId == "availability";
+      allow write: if isServer() || isAdmin();
+    }
+
+    match /accessCodes/{codeId} {
+      allow read, write: if isServer() || isAdmin();
+    }
+
+    match /siteContent/{documentId} {
+      allow read: if true;
+      allow write: if isServer() || isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

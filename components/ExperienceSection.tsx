@@ -1,21 +1,31 @@
 import { Leaf, ShieldCheck, Sun } from "lucide-react";
 import Image from "next/image";
-import type { SiteCopy } from "@/lib/i18n";
+import type { Language, SiteCopy } from "@/lib/i18n";
+import { getSiteImage } from "@/lib/siteContent";
+import type { SiteContent } from "@/types/site";
 
 type ExperienceSectionProps = {
   content: SiteCopy;
+  language: Language;
+  siteContent: SiteContent;
 };
 
 const detailIcons = [Sun, Leaf, ShieldCheck];
 
-export default function ExperienceSection({ content }: ExperienceSectionProps) {
+export default function ExperienceSection({
+  content,
+  language,
+  siteContent,
+}: ExperienceSectionProps) {
+  const image = getSiteImage(siteContent, "experience");
+
   return (
     <section className="bg-ivory py-20 md:py-28">
       <div className="section-shell grid gap-10 lg:grid-cols-[0.82fr_1fr] lg:items-center">
         <div className="relative min-h-[520px] overflow-hidden rounded-[8px] bg-olive shadow-soft">
           <Image
-            src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1500&q=86"
-            alt="Warm designer villa interior"
+            src={image?.src ?? ""}
+            alt={image?.alt[language] ?? "Warm designer villa interior"}
             fill
             sizes="(min-width: 1024px) 42vw, 100vw"
             className="object-cover"

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Amenities from "@/components/Amenities";
 import BookingSection from "@/components/BookingSection";
 import ExperienceSection from "@/components/ExperienceSection";
-import FamilyAccess from "@/components/FamilyAccess";
 import Footer from "@/components/Footer";
 import Gallery from "@/components/Gallery";
 import Header from "@/components/Header";
@@ -14,11 +13,15 @@ import Pricing from "@/components/Pricing";
 import VillaOverview from "@/components/VillaOverview";
 import type { Language } from "@/lib/i18n";
 import { getCopy } from "@/lib/i18n";
+import type { SiteContent } from "@/types/site";
 
-export default function CasaMimosaApp() {
+type CasaMimosaAppProps = {
+  siteContent: SiteContent;
+  today: string;
+};
+
+export default function CasaMimosaApp({ siteContent, today }: CasaMimosaAppProps) {
   const [language, setLanguage] = useState<Language>("da");
-  const [familyAccessOpen, setFamilyAccessOpen] = useState(false);
-  const [familyAccessUnlocked, setFamilyAccessUnlocked] = useState(false);
   const content = getCopy(language);
 
   useEffect(() => {
@@ -30,30 +33,19 @@ export default function CasaMimosaApp() {
       <Header
         content={content}
         language={language}
-        onFamilyAccessClick={() => setFamilyAccessOpen(true)}
         onLanguageChange={setLanguage}
       />
       <main>
-        <Hero content={content} onFamilyAccessClick={() => setFamilyAccessOpen(true)} />
+        <Hero content={content} language={language} siteContent={siteContent} />
         <VillaOverview content={content} />
-        <ExperienceSection content={content} />
-        <Gallery content={content} language={language} />
+        <ExperienceSection content={content} language={language} siteContent={siteContent} />
+        <Gallery content={content} language={language} siteContent={siteContent} />
         <Amenities content={content} />
-        <LocationSection content={content} />
+        <LocationSection content={content} language={language} siteContent={siteContent} />
         <Pricing content={content} language={language} />
-        <BookingSection
-          content={content}
-          familyAccessUnlocked={familyAccessUnlocked}
-          language={language}
-        />
+        <BookingSection content={content} language={language} today={today} />
       </main>
-      <Footer content={content} onFamilyAccessClick={() => setFamilyAccessOpen(true)} />
-      <FamilyAccess
-        content={content}
-        open={familyAccessOpen}
-        onClose={() => setFamilyAccessOpen(false)}
-        onUnlocked={() => setFamilyAccessUnlocked(true)}
-      />
+      <Footer content={content} />
     </>
   );
 }

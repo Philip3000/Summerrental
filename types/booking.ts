@@ -1,6 +1,8 @@
 import type { Language } from "@/lib/i18n";
+import type { PrivateAccessKind } from "@/lib/privateAccess";
 
-export type BookingType = "public_request" | "family_reservation";
+export type BookingType = "public_request" | "friend_rental" | "private_reservation";
+export type BookingStatus = "inquiry" | "reserved" | "booked" | "denied" | "cancelled";
 
 export type BookingRequestPayload = {
   language: Language;
@@ -10,7 +12,27 @@ export type BookingRequestPayload = {
   departureDate: string;
   guests: number;
   message: string;
-  estimatedPrice: number;
-  familyAccessUnlocked: boolean;
+  estimatedPriceDkk: number;
+  privateAccessKind: PrivateAccessKind;
+  requiresApproval: boolean;
   bookingType: BookingType;
 };
+
+export type BookingRecord = BookingRequestPayload & {
+  id: string;
+  reference: string;
+  status: BookingStatus;
+  nights: number;
+  createdAt: string;
+  updatedAt: string;
+  decidedAt?: string;
+  adminNote?: string;
+};
+
+export type PublicAvailabilityPeriod = {
+  arrivalDate: string;
+  departureDate: string;
+  status: Extract<BookingStatus, "reserved" | "booked">;
+};
+
+export type BookingAdminAction = "approve" | "deny" | "cancel";
