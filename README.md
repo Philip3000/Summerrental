@@ -25,10 +25,7 @@ Open `http://localhost:3000`.
 
 Admin terminal: `http://localhost:3000/admin`
 
-Admin login uses Firebase Auth email/password. Enable Email/Password sign-in in Firebase Authentication, create an owner user, then either:
-
-- Add the owner's email to `ADMIN_EMAILS`, or
-- Create a Firestore document at `admins/{firebaseAuthUid}`.
+Admin login uses Firebase Auth email/password. Enable Email/Password sign-in in Firebase Authentication, create an owner user, then create a Firestore document at `admins/{firebaseAuthUid}`.
 
 ## Scripts
 
@@ -52,29 +49,16 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=137963519885
 NEXT_PUBLIC_FIREBASE_APP_ID=...
 ```
 
-Server-side secrets:
+Server-side/private configuration:
 
 ```bash
-FAMILY_ACCESS_CODE=Crossfire
-FRIEND_ACCESS_CODE=your-friend-code
-ADMIN_SESSION_SECRET=change-this-long-random-secret
-ADMIN_EMAILS=owner@example.com
 OWNER_EMAIL=martin@safeyou.dk
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
-FIREBASE_SERVER_EMAIL=server-writer@example.com
-FIREBASE_SERVER_PASSWORD=change-this-server-user-password
 ```
 
-`FAMILY_ACCESS_CODE` and `FRIEND_ACCESS_CODE` are local fallback/bootstrap values. In production, create and remove active friend/family codes in `/admin`; those codes are stored in Firestore as hashes.
+No Firebase Admin SDK, service account private key, server-writer account, or custom admin session secret is required. The admin dashboard uses the signed-in Firebase Auth user directly, and Firestore/Storage rules authorize writes through `admins/{uid}`.
 
-No Firebase Admin SDK or service account private key is required. For persistent Firestore writes and Storage uploads, create a normal Firebase Auth email/password user for the server, add its credentials to:
-
-- `FIREBASE_SERVER_EMAIL`
-- `FIREBASE_SERVER_PASSWORD`
-
-Then create a Firestore document at `serverRoles/{serverWriterUid}`. The included Firestore and Storage rules allow that signed-in server user to perform the server-side booking, code, content, and image operations.
-
-Without `FIREBASE_SERVER_EMAIL` and `FIREBASE_SERVER_PASSWORD`, local development falls back to in-memory storage so the app can still run and build.
+Create and remove active friend/family codes in `/admin`; those codes are stored in Firestore as SHA-256 hashes.
 
 ## Booking Logic
 
@@ -116,19 +100,14 @@ Deploy rules with the Firebase CLI:
 firebase deploy --only firestore:rules,storage
 ```
 
-The rules allow admin access only when the signed-in Firebase Auth user has a matching Firestore document at `admins/{uid}`. The Next.js API routes also allow emails listed in `ADMIN_EMAILS`, but direct Firebase client access depends on the `admins/{uid}` document because Firebase Security Rules cannot read Vercel/Render environment variables.
-
-The server-side API routes use the Firebase Web SDK, not the Admin SDK. They sign in as the Firebase Auth user configured by `FIREBASE_SERVER_EMAIL` and `FIREBASE_SERVER_PASSWORD`; that user's UID must have a document at `serverRoles/{uid}`.
+The rules allow admin access only when the signed-in Firebase Auth user has a matching Firestore document at `admins/{uid}`. The admin page uses normal Firebase client SDK calls such as `setDoc`, `updateDoc`, `deleteDoc`, and Storage uploads.
 
 Recommended Firebase setup:
 
 1. Enable Email/Password in Firebase Authentication.
 2. Create an owner/admin Auth user.
-3. Add the owner's email to `ADMIN_EMAILS`, and preferably create `admins/{ownerUid}` in Firestore for direct rules-based admin access.
-4. Create a separate server-writer Auth user.
-5. Add the server-writer credentials to `FIREBASE_SERVER_EMAIL` and `FIREBASE_SERVER_PASSWORD`.
-6. Create `serverRoles/{serverWriterUid}` in Firestore.
-7. Deploy `firestore.rules` and `storage.rules`.
+3. Create `admins/{ownerUid}` in Firestore.
+4. Deploy `firestore.rules` and `storage.rules`.
 
 ## Pricing
 
@@ -145,7 +124,7 @@ Change prices and season boundaries in `lib/pricing.ts`.
 
 1. Push the repository to GitHub.
 2. Import the project in Vercel.
-3. Add all server-side env vars, especially `ADMIN_SESSION_SECRET`, `FIREBASE_SERVER_EMAIL`, and `FIREBASE_SERVER_PASSWORD`.
+3. Add the public Firebase env vars, `NEXT_PUBLIC_SITE_URL`, and `OWNER_EMAIL`.
 4. Deploy.
 
 Vercel will use `npm run build`.
@@ -168,7 +147,6 @@ Set the same environment variables as Vercel.
 - Live frontpage content in production: `/admin`, saved to Firestore `siteContent/main`
 - Booking storage and site content storage: `lib/bookingStore.ts`
 - Public booking API: `app/api/booking-request/route.ts`
-- Admin APIs: `app/api/admin/*`
 
 ## Hydration Note
 

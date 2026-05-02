@@ -14,12 +14,29 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { getAuth, signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { FormEvent, ReactNode, useMemo, useState } from "react";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  DocumentData,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  runTransaction,
+  serverTimestamp,
+  setDoc,
+} from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import { getFirebaseClientApp } from "@/lib/firebaseClient";
 import { formatDkk } from "@/lib/pricing";
 import type { Language, SiteCopy } from "@/lib/i18n";
-import type { AccessCodeListItem } from "@/types/access";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+import { mergeSiteContent } from "@/lib/siteContent";
+import type { AccessCodeListItem, AccessCodeRecord } from "@/types/access";
 import type { BookingAdminAction, BookingRecord, BookingStatus } from "@/types/booking";
 import type { SiteContent, SiteImageHeight, SiteImageLayout } from "@/types/site";
 
@@ -54,6 +71,13 @@ const statusClasses: Record<BookingStatus, string> = {
   denied: "bg-clay/10 text-clay",
   cancelled: "bg-stone/20 text-ink/60",
 };
+
+const BOOKINGS_COLLECTION = "bookings";
+const CALENDAR_COLLECTION = "calendar";
+const CALENDAR_DOCUMENT = "availability";
+const ACCESS_CODES_COLLECTION = "accessCodes";
+const SITE_CONTENT_COLLECTION = "siteContent";
+const SITE_CONTENT_DOCUMENT = "main";
 
 const sectionNames: Record<string, string> = {
   nav: "Navigation",
@@ -96,6 +120,104 @@ const imageLayoutLabels: Record<SiteImageLayout, string> = {
   wide: "Wide",
   tall: "Tall",
 };
+
+type CalendarPeriod = {
+  bookingId: string;
+  arrivalDate: string;
+  departureDate: string;
+  status: Extract<BookingStatus, "reserved" | "booked">;
+};
+
+function getClientDb() {
+  return getFirestore(getFirebaseClientApp());
+}
+
+function getClientStorage() {
+  return getStorage(getFirebaseClientApp());
+}
+
+function isBlockingStatus(status: BookingStatus): status is Extract<BookingStatus, "reserved" | "booked"> {
+  return status === "reserved" || status === "booked";
+}
+
+function normalizeBooking(id: string, data: DocumentData): BookingRecord {
+  return {
+    id,
+    reference: data.reference,
+    language: data.language,
+    name: data.name,
+    email: data.email,
+    arrivalDate: data.arrivalDate,
+    departureDate: data.departureDate,
+    guests: data.guests,
+    message: data.message ?? "",
+    estimatedPriceDkk: data.estimatedPriceDkk ?? data.estimatedPrice ?? 0,
+    privateAccessKind: data.privateAccessKind ?? "none",
+    requiresApproval: Boolean(data.requiresApproval),
+    bookingType: data.bookingType,
+    status: data.status,
+    nights: data.nights ?? 0,
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+    decidedAt: data.decidedAt,
+    adminNote: data.adminNote,
+  };
+}
+
+function normalizeAccessCode(id: string, data: DocumentData): AccessCodeRecord {
+  return {
+    id,
+    label: data.label,
+    kind: data.kind,
+    codeHash: data.codeHash ?? id,
+    codePreview: data.codePreview,
+    active: Boolean(data.active),
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+  };
+}
+
+function toAccessCodeListItem(accessCode: AccessCodeRecord): AccessCodeListItem {
+  return {
+    id: accessCode.id,
+    label: accessCode.label,
+    kind: accessCode.kind,
+    codePreview: accessCode.codePreview,
+    active: accessCode.active,
+    createdAt: accessCode.createdAt,
+    updatedAt: accessCode.updatedAt,
+  };
+}
+
+function getCalendarPeriods(data: DocumentData | undefined): CalendarPeriod[] {
+  return Array.isArray(data?.periods) ? data.periods : [];
+}
+
+function getCodePreview(code: string) {
+  const trimmed = code.trim();
+
+  if (trimmed.length <= 4) {
+    return "****";
+  }
+
+  return `**** ${trimmed.slice(-4)}`;
+}
+
+async function hashAccessCode(code: string) {
+  const bytes = new TextEncoder().encode(code.trim());
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function safeFilename(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -230,131 +352,201 @@ export default function AdminDashboard({
     [editorLanguage, siteContent.copy],
   );
 
+  async function loadAdminData() {
+    await Promise.all([refreshBookings(), refreshAccessCodes(), refreshSiteContent()]);
+  }
+
+  useEffect(() => {
+    const auth = getAuth(getFirebaseClientApp());
+
+    return onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        setAuthenticated(false);
+        return;
+      }
+
+      setAuthenticated(true);
+      void loadAdminData().catch(async () => {
+        setLoginError("This Firebase user is not allowed to manage Casa Mimosa.");
+        setAuthenticated(false);
+        await signOut(auth).catch(() => undefined);
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoginError("");
 
-    let idToken = "";
-
     try {
       const auth = getAuth(getFirebaseClientApp());
-      const credential = await signInWithEmailAndPassword(auth, email, password);
-      idToken = await credential.user.getIdToken();
+      await signInWithEmailAndPassword(auth, email, password);
+      setAuthenticated(true);
+      await loadAdminData();
+      setEmail("");
+      setPassword("");
     } catch {
-      setLoginError("Firebase login failed. Check email and password.");
-      return;
+      setAuthenticated(false);
+      setLoginError("Login failed, or this user is not allowed to manage Casa Mimosa.");
     }
-
-    const response = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken }),
-    }).catch(() => null);
-
-    if (!response?.ok) {
-      setLoginError("This Firebase user is not allowed to manage Casa Mimosa.");
-      return;
-    }
-
-    setAuthenticated(true);
-    setEmail("");
-    setPassword("");
-    await Promise.all([refreshBookings(), refreshAccessCodes(), refreshSiteContent()]);
   }
 
   async function logout() {
-    await fetch("/api/admin/logout", { method: "POST" });
     await signOut(getAuth(getFirebaseClientApp())).catch(() => undefined);
     setAuthenticated(false);
   }
 
   async function refreshBookings() {
-    const response = await fetch("/api/admin/bookings", { cache: "no-store" });
-
-    if (response.ok) {
-      const data = (await response.json()) as { bookings: BookingRecord[] };
-      setBookings(data.bookings);
-    }
+    const db = getClientDb();
+    const snapshot = await getDocs(
+      query(collection(db, BOOKINGS_COLLECTION), orderBy("createdAt", "desc")),
+    );
+    setBookings(snapshot.docs.map((bookingDoc) => normalizeBooking(bookingDoc.id, bookingDoc.data())));
   }
 
   async function refreshAccessCodes() {
-    const response = await fetch("/api/admin/access-codes", { cache: "no-store" });
-
-    if (response.ok) {
-      const data = (await response.json()) as { accessCodes: AccessCodeListItem[] };
-      setAccessCodes(data.accessCodes);
-    }
+    const db = getClientDb();
+    const snapshot = await getDocs(
+      query(collection(db, ACCESS_CODES_COLLECTION), orderBy("createdAt", "desc")),
+    );
+    setAccessCodes(
+      snapshot.docs.map((accessCodeDoc) =>
+        toAccessCodeListItem(normalizeAccessCode(accessCodeDoc.id, accessCodeDoc.data())),
+      ),
+    );
   }
 
   async function refreshSiteContent() {
-    const response = await fetch("/api/admin/site-content", { cache: "no-store" });
-
-    if (response.ok) {
-      const data = (await response.json()) as SiteContent;
-      setSiteContent(data);
-    }
+    const db = getClientDb();
+    const snapshot = await getDoc(doc(db, SITE_CONTENT_COLLECTION, SITE_CONTENT_DOCUMENT));
+    setSiteContent(mergeSiteContent(snapshot.exists() ? (snapshot.data() as Partial<SiteContent>) : null));
   }
 
   async function createCode(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setNotice("");
 
-    const response = await fetch("/api/admin/access-codes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        label: newCodeLabel,
+    try {
+      const db = getClientDb();
+      const now = new Date().toISOString();
+      const codeHash = await hashAccessCode(newCodeValue);
+      const codeRef = doc(db, ACCESS_CODES_COLLECTION, codeHash);
+      const existing = await getDoc(codeRef);
+
+      if (existing.exists()) {
+        setNotice("Code already exists.");
+        return;
+      }
+
+      const record: AccessCodeRecord = {
+        id: codeHash,
+        label: newCodeLabel.trim(),
         kind: newCodeKind,
-        code: newCodeValue,
-      }),
-    });
+        codeHash,
+        codePreview: getCodePreview(newCodeValue),
+        active: true,
+        createdAt: now,
+        updatedAt: now,
+      };
 
-    if (!response.ok) {
-      const data = await response.json().catch(() => null);
-      setNotice(data?.error ?? "Code could not be created.");
-      return;
+      await setDoc(codeRef, {
+        ...record,
+        serverCreatedAt: serverTimestamp(),
+        serverUpdatedAt: serverTimestamp(),
+      });
+
+      setAccessCodes((items) => [toAccessCodeListItem(record), ...items]);
+      setNewCodeLabel("");
+      setNewCodeValue("");
+      setNotice("Code created. It can be used immediately.");
+    } catch {
+      setNotice("Code could not be created. Check your admin access.");
     }
-
-    const data = (await response.json()) as { accessCode: AccessCodeListItem };
-    setAccessCodes((items) => [data.accessCode, ...items]);
-    setNewCodeLabel("");
-    setNewCodeValue("");
-    setNotice("Code created. It can be used immediately.");
   }
 
   async function deleteCode(id: string) {
     setNotice("");
 
-    const response = await fetch(`/api/admin/access-codes/${id}`, {
-      method: "DELETE",
-    });
-
-    if (!response.ok) {
+    try {
+      await deleteDoc(doc(getClientDb(), ACCESS_CODES_COLLECTION, id));
+      setAccessCodes((items) => items.filter((item) => item.id !== id));
+      setNotice("Code removed.");
+    } catch {
       setNotice("Code could not be deleted.");
-      return;
     }
-
-    setAccessCodes((items) => items.filter((item) => item.id !== id));
-    setNotice("Code removed.");
   }
 
   async function updateBooking(id: string, action: BookingAdminAction) {
     setNotice("");
+    const now = new Date().toISOString();
+    const statusByAction: Record<BookingAdminAction, BookingStatus> = {
+      approve: "booked",
+      deny: "denied",
+      cancel: "cancelled",
+    };
+    const nextStatus = statusByAction[action];
 
-    const response = await fetch(`/api/admin/bookings/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action }),
-    });
+    try {
+      const db = getClientDb();
+      const updatedBooking = await runTransaction(db, async (transaction) => {
+        const bookingRef = doc(db, BOOKINGS_COLLECTION, id);
+        const calendarRef = doc(db, CALENDAR_COLLECTION, CALENDAR_DOCUMENT);
+        const bookingSnapshot = await transaction.get(bookingRef);
 
-    if (!response.ok) {
-      const data = await response.json().catch(() => null);
-      setNotice(data?.error ?? "Could not update booking.");
-      return;
+        if (!bookingSnapshot.exists()) {
+          throw new Error("BOOKING_NOT_FOUND");
+        }
+
+        const booking = normalizeBooking(bookingSnapshot.id, bookingSnapshot.data());
+        const calendarSnapshot = await transaction.get(calendarRef);
+        const currentPeriods = getCalendarPeriods(calendarSnapshot.data()).filter(
+          (period) => period.bookingId !== id,
+        );
+        const nextPeriods = isBlockingStatus(nextStatus)
+          ? [
+              ...currentPeriods,
+              {
+                bookingId: id,
+                arrivalDate: booking.arrivalDate,
+                departureDate: booking.departureDate,
+                status: nextStatus,
+              },
+            ]
+          : currentPeriods;
+
+        transaction.update(bookingRef, {
+          status: nextStatus,
+          requiresApproval: false,
+          updatedAt: now,
+          decidedAt: now,
+          adminNote: "",
+          serverUpdatedAt: serverTimestamp(),
+        });
+        transaction.set(
+          calendarRef,
+          {
+            periods: nextPeriods,
+            updatedAt: now,
+            serverUpdatedAt: serverTimestamp(),
+          },
+          { merge: true },
+        );
+
+        return {
+          ...booking,
+          status: nextStatus,
+          requiresApproval: false,
+          updatedAt: now,
+          decidedAt: now,
+          adminNote: "",
+        };
+      });
+
+      setBookings((items) => items.map((item) => (item.id === id ? updatedBooking : item)));
+    } catch {
+      setNotice("Could not update booking.");
     }
-
-    const data = (await response.json()) as { booking: BookingRecord };
-    setBookings((items) => items.map((item) => (item.id === id ? data.booking : item)));
   }
 
   function updateCopy(language: Language, path: FieldPath, value: string) {
@@ -406,23 +598,24 @@ export default function AdminDashboard({
     setSavingSiteContent(true);
     setNotice("");
 
-    const response = await fetch("/api/admin/site-content", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(siteContent),
-    }).catch(() => null);
+    try {
+      const updated = {
+        ...mergeSiteContent(siteContent),
+        updatedAt: new Date().toISOString(),
+      };
 
-    setSavingSiteContent(false);
-
-    if (!response?.ok) {
-      const data = await response?.json().catch(() => null);
-      setNotice(data?.error ?? "Site content could not be saved.");
-      return;
+      await setDoc(
+        doc(getClientDb(), SITE_CONTENT_COLLECTION, SITE_CONTENT_DOCUMENT),
+        { ...updated, serverUpdatedAt: serverTimestamp() },
+        { merge: true },
+      );
+      setSiteContent(updated);
+      setNotice(successMessage);
+    } catch {
+      setNotice("Site content could not be saved.");
+    } finally {
+      setSavingSiteContent(false);
     }
-
-    const updated = (await response.json()) as SiteContent;
-    setSiteContent(updated);
-    setNotice(successMessage);
   }
 
   async function uploadImage(index: number, file: File | undefined) {
@@ -433,26 +626,24 @@ export default function AdminDashboard({
     setUploadingSlot(siteContent.images[index]?.slot ?? null);
     setNotice("");
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("slot", siteContent.images[index]?.slot ?? "site-image");
+    try {
+      const slot = siteContent.images[index]?.slot ?? "site-image";
+      const objectName = `site-images/${slot}-${Date.now()}-${safeFilename(file.name)}`;
+      const storageRef = ref(getClientStorage(), objectName);
 
-    const response = await fetch("/api/admin/upload-image", {
-      method: "POST",
-      body: formData,
-    }).catch(() => null);
+      await uploadBytes(storageRef, file, {
+        contentType: file.type,
+        cacheControl: "public, max-age=31536000",
+      });
+      const url = await getDownloadURL(storageRef);
 
-    setUploadingSlot(null);
-
-    if (!response?.ok) {
-      const data = await response?.json().catch(() => null);
-      setNotice(data?.error ?? "Image could not be uploaded.");
-      return;
+      updateImage(index, (image) => ({ ...image, src: url }));
+      setNotice("Image uploaded. Remember to save media.");
+    } catch {
+      setNotice("Image could not be uploaded.");
+    } finally {
+      setUploadingSlot(null);
     }
-
-    const data = (await response.json()) as { url: string };
-    updateImage(index, (image) => ({ ...image, src: data.url }));
-    setNotice("Image uploaded. Remember to save media.");
   }
 
   if (!authenticated) {

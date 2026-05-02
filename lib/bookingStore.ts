@@ -99,14 +99,48 @@ export async function listBookings() {
     return [...getMemoryBookings()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
-  const snapshot = await getDocs(query(collection(db, BOOKINGS_COLLECTION), orderBy("createdAt", "desc")));
+  let snapshot;
+
+  try {
+    snapshot = await getDocs(query(collection(db, BOOKINGS_COLLECTION), orderBy("createdAt", "desc")));
+  } catch {
+    return [...getMemoryBookings()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
 
   return snapshot.docs.map((bookingDoc) => normalizeBooking(bookingDoc.id, bookingDoc.data()));
 }
 
 export async function listBlockingBookings() {
-  const bookings = await listBookings();
-  return bookings.filter((booking) => isBlockingStatus(booking.status));
+  const db = await getFirebaseServerDb();
+  let calendarSnapshot;
+
+  try {
+    calendarSnapshot = await getDoc(doc(db, CALENDAR_COLLECTION, CALENDAR_DOCUMENT));
+  } catch {
+    return [];
+  }
+
+  const periods = getCalendarPeriods(calendarSnapshot.data());
+
+  return periods.map((period) => ({
+    id: period.bookingId,
+    reference: "",
+    language: "en" as const,
+    name: "",
+    email: "",
+    arrivalDate: period.arrivalDate,
+    departureDate: period.departureDate,
+    guests: 0,
+    message: "",
+    estimatedPriceDkk: 0,
+    privateAccessKind: "none" as const,
+    requiresApproval: false,
+    bookingType: "public_request" as const,
+    status: period.status,
+    nights: 0,
+    createdAt: "",
+    updatedAt: "",
+  }));
 }
 
 export async function createBooking(input: BookingCreateInput) {
@@ -297,8 +331,12 @@ export async function getSiteContent() {
     return mergeSiteContent(globalStore.__casaMimosaSiteContent);
   }
 
-  const siteContentDoc = await getDoc(doc(db, SITE_CONTENT_COLLECTION, SITE_CONTENT_DOCUMENT));
-  return mergeSiteContent(siteContentDoc.exists() ? (siteContentDoc.data() as Partial<SiteContent>) : null);
+  try {
+    const siteContentDoc = await getDoc(doc(db, SITE_CONTENT_COLLECTION, SITE_CONTENT_DOCUMENT));
+    return mergeSiteContent(siteContentDoc.exists() ? (siteContentDoc.data() as Partial<SiteContent>) : null);
+  } catch {
+    return mergeSiteContent(globalStore.__casaMimosaSiteContent);
+  }
 }
 
 export async function updateSiteContent(content: Partial<SiteContent>) {

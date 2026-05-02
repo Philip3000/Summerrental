@@ -7,9 +7,42 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    function isServer() {
-      return request.auth != null
-        && exists(/databases/$(database)/documents/serverRoles/$(request.auth.uid));
+    function validBookingStatus(status) {
+      return status in ["inquiry", "reserved", "booked", "denied", "cancelled"];
+    }
+
+    function validBookingCreate() {
+      return request.resource.data.keys().hasOnly([
+          "reference",
+          "language",
+          "name",
+          "email",
+          "arrivalDate",
+          "departureDate",
+          "guests",
+          "message",
+          "estimatedPriceDkk",
+          "privateAccessKind",
+          "requiresApproval",
+          "bookingType",
+          "status",
+          "nights",
+          "createdAt",
+          "updatedAt",
+          "serverCreatedAt",
+          "serverUpdatedAt"
+        ])
+        && request.resource.data.language in ["da", "en"]
+        && request.resource.data.guests is int
+        && request.resource.data.guests >= 1
+        && request.resource.data.guests <= 8
+        && request.resource.data.name is string
+        && request.resource.data.email is string
+        && request.resource.data.arrivalDate is string
+        && request.resource.data.departureDate is string
+        && request.resource.data.status in ["inquiry", "reserved", "booked"]
+        && request.resource.data.privateAccessKind in ["none", "friend", "family"]
+        && request.resource.data.bookingType in ["public_request", "friend_rental", "private_reservation"];
     }
 
     match /admins/{uid} {
@@ -17,27 +50,28 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    match /serverRoles/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if false;
-    }
-
     match /bookings/{bookingId} {
-      allow read, write: if isServer() || isAdmin();
+      allow create: if validBookingCreate();
+      allow read, update, delete: if isAdmin();
     }
 
     match /calendar/{documentId} {
       allow read: if documentId == "availability";
-      allow write: if isServer() || isAdmin();
+      allow create, update: if documentId == "availability" && (
+        isAdmin()
+        || request.resource.data.keys().hasOnly(["periods", "updatedAt", "serverUpdatedAt"])
+      );
+      allow delete: if isAdmin();
     }
 
     match /accessCodes/{codeId} {
-      allow read, write: if isServer() || isAdmin();
+      allow get: if true;
+      allow list, create, update, delete: if isAdmin();
     }
 
     match /siteContent/{documentId} {
       allow read: if true;
-      allow write: if isServer() || isAdmin();
+      allow write: if isAdmin();
     }
 
     match /{document=**} {
