@@ -9,7 +9,7 @@ import {
   runTransaction,
   serverTimestamp,
   setDoc,
-} from "firebase/firestore";
+} from "firebase/firestore/lite";
 import { getFirebaseServerDb } from "@/lib/firebaseServer";
 import { rangesOverlap } from "@/lib/dateRanges";
 import { mergeSiteContent } from "@/lib/siteContent";
@@ -328,13 +328,25 @@ export async function getSiteContent() {
   const db = await getFirebaseServerDb();
 
   if (!db) {
+    console.warn("getSiteContent: no Firebase db, using memory/default content");
     return mergeSiteContent(globalStore.__casaMimosaSiteContent);
   }
 
   try {
     const siteContentDoc = await getDoc(doc(db, SITE_CONTENT_COLLECTION, SITE_CONTENT_DOCUMENT));
-    return mergeSiteContent(siteContentDoc.exists() ? (siteContentDoc.data() as Partial<SiteContent>) : null);
-  } catch {
+
+    console.log("getSiteContent: siteContent/main exists:", siteContentDoc.exists());
+
+    if (siteContentDoc.exists()) {
+      const data = siteContentDoc.data() as Partial<SiteContent>;
+      console.log("getSiteContent: loaded updatedAt:", data.updatedAt);
+      return mergeSiteContent(data);
+    }
+
+    console.warn("getSiteContent: siteContent/main missing, using defaults");
+    return mergeSiteContent(null);
+  } catch (error) {
+    console.error("getSiteContent: Firestore read failed", error);
     return mergeSiteContent(globalStore.__casaMimosaSiteContent);
   }
 }

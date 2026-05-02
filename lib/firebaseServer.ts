@@ -1,8 +1,10 @@
-import { FirebaseApp, getApp, getApps, initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { firebaseConfig } from "@/lib/firebaseClient";
+import { type FirebaseApp, getApp, getApps, initializeApp } from "firebase/app";
+import { getFirestore, type Firestore } from "firebase/firestore/lite";
+import { firebaseConfig } from "@/lib/firebaseConfig";
 
 const SERVER_APP_NAME = "casa-mimosa-public-server";
+
+let serverDb: Firestore | null = null;
 
 function getFirebaseServerApp(): FirebaseApp {
   return getApps().some((app) => app.name === SERVER_APP_NAME)
@@ -11,5 +13,10 @@ function getFirebaseServerApp(): FirebaseApp {
 }
 
 export async function getFirebaseServerDb() {
-  return getFirestore(getFirebaseServerApp());
+  if (serverDb) {
+    return serverDb;
+  }
+
+  serverDb = getFirestore(getFirebaseServerApp());
+  return serverDb;
 }
