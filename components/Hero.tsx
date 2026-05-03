@@ -55,7 +55,7 @@ export default function Hero({ content, language, siteContent }: HeroProps) {
               {content.hero.primaryCta}
             </a>
             <a
-              href="#villa"
+              href="#gallery"
               className="inline-flex h-12 items-center justify-center rounded-full border border-ivory/40 bg-ivory/10 px-6 text-sm font-bold text-ivory backdrop-blur transition hover:bg-ivory/18 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ivory"
             >
               {content.hero.secondaryCta}
