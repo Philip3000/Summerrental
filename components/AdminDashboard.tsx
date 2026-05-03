@@ -6,6 +6,7 @@ import {
   Image as ImageIcon,
   KeyRound,
   LogOut,
+  Plus,
   RefreshCcw,
   Save,
   ShieldCheck,
@@ -40,12 +41,11 @@ import {
   setDoc
 } from 'firebase/firestore'
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
-import { FormEvent, ReactNode, useEffect, useMemo, useState } from 'react'
+import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { getFirebaseClientApp } from '@/lib/firebaseClient'
 import { formatDkk } from '@/lib/pricing'
 import type { Language, SiteCopy } from '@/lib/i18n'
-import { getStorage } from 'firebase/storage'
-import { mergeSiteContent } from '@/lib/siteContent'
+import { defaultHeroImage, mergeSiteContent } from '@/lib/siteContent'
 import type { AccessCodeListItem, AccessCodeRecord } from '@/types/access'
 import type {
   BookingAdminAction,
@@ -405,6 +405,9 @@ export default function AdminDashboard ({
   const [savingSiteContent, setSavingSiteContent] = useState(false)
   const [uploadingSlot, setUploadingSlot] = useState<string | null>(null)
   const [notice, setNotice] = useState('')
+  const siteContentRef = useRef(siteContent)
+  const siteContentSaveQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const siteContentSaveVersionRef = useRef(0)
 
   const upcomingBookings = useMemo(
     () =>
@@ -417,6 +420,19 @@ export default function AdminDashboard ({
     () => collectCopyFields(siteContent.copy[editorLanguage]),
     [editorLanguage, siteContent.copy]
   )
+
+  useEffect(() => {
+    siteContentRef.current = siteContent
+  }, [siteContent])
+
+  function applySiteContentUpdate (
+    updater: (current: SiteContent) => SiteContent
+  ) {
+    const nextContent = updater(siteContentRef.current)
+    siteContentRef.current = nextContent
+    setSiteContent(nextContent)
+    return nextContent
+  }
 
   async function assertAdminAccess (user: User) {
     const adminDoc = await getDoc(doc(getClientDb(), 'admins', user.uid))
@@ -659,7 +675,7 @@ export default function AdminDashboard ({
   }
 
   function updateCopy (language: Language, path: FieldPath, value: string) {
-    setSiteContent(current => ({
+    applySiteContentUpdate(current => ({
       ...current,
       copy: {
         ...current.copy,
@@ -674,7 +690,7 @@ export default function AdminDashboard ({
       current: SiteContent['pricing'][number]
     ) => SiteContent['pricing'][number]
   ) {
-    setSiteContent(current => ({
+    applySiteContentUpdate(current => ({
       ...current,
       pricing: current.pricing.map((season, seasonIndex) =>
         seasonIndex === index ? updater(season) : season
@@ -702,7 +718,7 @@ export default function AdminDashboard ({
       current: SiteContent['images'][number]
     ) => SiteContent['images'][number]
   ) {
-    setSiteContent(current => ({
+    return applySiteContentUpdate(current => ({
       ...current,
       images: current.images.map((image, imageIndex) =>
         imageIndex === index ? updater(image) : image
@@ -710,37 +726,104 @@ export default function AdminDashboard ({
     }))
   }
 
-  async function saveSiteContent (successMessage: string) {
+  function addGalleryImage () {
+    const nextContent = applySiteContentUpdate(current => {
+      const galleryImages = current.images.filter(image =>
+        image.slot.startsWith('gallery-')
+      )
+      const fallback = galleryImages[galleryImages.length - 1] ?? current.images[0]
+      const nextNumber = galleryImages.length + 1
+      const newImage: SiteContent['images'][number] = {
+        slot: `gallery-${Date.now().toString(36)}`,
+        label: `Gallery image ${nextNumber}`,
+        src: fallback?.src ?? defaultHeroImage,
+        alt: {
+          da: fallback?.alt.da ?? 'Casa Mimosa galleri billede',
+          en: fallback?.alt.en ?? 'Casa Mimosa gallery image'
+        },
+        presentation: {
+          focalX: 50,
+          focalY: 50,
+          height: 'standard',
+          galleryLayout: 'standard'
+        }
+      }
+
+      const nextContent = {
+        ...current,
+        images: [
+          ...current.images,
+          newImage
+        ]
+      }
+      return nextContent
+    })
+    void saveSiteContent('Gallery image added.', nextContent)
+  }
+
+  function removeGalleryImage (index: number) {
+    const nextContent = applySiteContentUpdate(current => ({
+      ...current,
+      images: current.images.filter((image, imageIndex) => {
+        if (imageIndex !== index) {
+          return true
+        }
+
+        return !image.slot.startsWith('gallery-')
+      })
+    }))
+    void saveSiteContent('Gallery image removed.', nextContent)
+  }
+
+  async function saveSiteContent (
+    successMessage: string,
+    contentToSave: SiteContent = siteContentRef.current
+  ) {
+    const saveVersion = siteContentSaveVersionRef.current + 1
+    siteContentSaveVersionRef.current = saveVersion
     setSavingSiteContent(true)
     setNotice('')
 
-    try {
-      const updated = {
-        ...mergeSiteContent(siteContent),
-        updatedAt: new Date().toISOString()
+    const saveTask = siteContentSaveQueueRef.current.then(async () => {
+      try {
+        const updated = {
+          ...mergeSiteContent(contentToSave),
+          updatedAt: new Date().toISOString()
+        }
+
+        const cleanUpdated = removeUndefinedDeep(updated)
+
+        await setDoc(
+          doc(getClientDb(), SITE_CONTENT_COLLECTION, SITE_CONTENT_DOCUMENT),
+          {
+            ...cleanUpdated,
+            serverUpdatedAt: serverTimestamp()
+          },
+          { merge: true }
+        )
+
+        if (saveVersion === siteContentSaveVersionRef.current) {
+          siteContentRef.current = cleanUpdated
+          setSiteContent(cleanUpdated)
+          setNotice(successMessage)
+        }
+      } catch (error) {
+        console.error('SAVE SITE CONTENT ERROR', error)
+
+        if (saveVersion === siteContentSaveVersionRef.current) {
+          setNotice(
+            getFirebaseErrorMessage(error, 'Site content could not be saved.')
+          )
+        }
+      } finally {
+        if (saveVersion === siteContentSaveVersionRef.current) {
+          setSavingSiteContent(false)
+        }
       }
+    })
 
-      const cleanUpdated = removeUndefinedDeep(updated)
-
-      await setDoc(
-        doc(getClientDb(), SITE_CONTENT_COLLECTION, SITE_CONTENT_DOCUMENT),
-        {
-          ...cleanUpdated,
-          serverUpdatedAt: serverTimestamp()
-        },
-        { merge: true }
-      )
-
-      setSiteContent(cleanUpdated)
-      setNotice(successMessage)
-    } catch (error) {
-      console.error('SAVE SITE CONTENT ERROR', error)
-      setNotice(
-        getFirebaseErrorMessage(error, 'Site content could not be saved.')
-      )
-    } finally {
-      setSavingSiteContent(false)
-    }
+    siteContentSaveQueueRef.current = saveTask.catch(() => undefined)
+    await saveTask
   }
 
   async function uploadImage (index: number, file: File | undefined) {
@@ -764,8 +847,8 @@ export default function AdminDashboard ({
       })
       const url = await getDownloadURL(storageRef)
 
-      updateImage(index, image => ({ ...image, src: url }))
-      setNotice('Image uploaded. Remember to save media.')
+      const nextContent = updateImage(index, image => ({ ...image, src: url }))
+      await saveSiteContent('Image uploaded and saved.', nextContent)
     } catch (error) {
       setNotice(getFirebaseErrorMessage(error, 'Image could not be uploaded.'))
     } finally {
@@ -976,6 +1059,9 @@ export default function AdminDashboard ({
                           event.target.value
                         )
                       }
+                      onBlur={() =>
+                        void saveSiteContent('Text autosaved.')
+                      }
                       className='w-full resize-y rounded-[8px] border border-olive/14 bg-ivory px-3 py-3 text-sm leading-6 outline-none focus:border-champagne focus:ring-2 focus:ring-champagne/30'
                     />
                   ) : (
@@ -987,6 +1073,9 @@ export default function AdminDashboard ({
                           field.path,
                           event.target.value
                         )
+                      }
+                      onBlur={() =>
+                        void saveSiteContent('Text autosaved.')
                       }
                       className='h-11 w-full rounded-[8px] border border-olive/14 bg-ivory px-3 text-sm outline-none focus:border-champagne focus:ring-2 focus:ring-champagne/30'
                     />
@@ -1051,6 +1140,9 @@ export default function AdminDashboard ({
                             dkkPerDay: Number(event.target.value)
                           }))
                         }
+                        onBlur={() =>
+                          void saveSiteContent('Pricing autosaved.')
+                        }
                         className='h-11 w-full rounded-[8px] border border-olive/14 bg-porcelain px-3 text-sm outline-none focus:border-champagne focus:ring-2 focus:ring-champagne/30'
                       />
                     </InputLabel>
@@ -1063,6 +1155,9 @@ export default function AdminDashboard ({
                             label: { ...current.label, da: event.target.value }
                           }))
                         }
+                        onBlur={() =>
+                          void saveSiteContent('Pricing autosaved.')
+                        }
                         className='h-11 w-full rounded-[8px] border border-olive/14 bg-porcelain px-3 text-sm outline-none focus:border-champagne focus:ring-2 focus:ring-champagne/30'
                       />
                     </InputLabel>
@@ -1074,6 +1169,9 @@ export default function AdminDashboard ({
                             ...current,
                             label: { ...current.label, en: event.target.value }
                           }))
+                        }
+                        onBlur={() =>
+                          void saveSiteContent('Pricing autosaved.')
                         }
                         className='h-11 w-full rounded-[8px] border border-olive/14 bg-porcelain px-3 text-sm outline-none focus:border-champagne focus:ring-2 focus:ring-champagne/30'
                       />
@@ -1090,6 +1188,9 @@ export default function AdminDashboard ({
                             }
                           }))
                         }
+                        onBlur={() =>
+                          void saveSiteContent('Pricing autosaved.')
+                        }
                         className='h-11 w-full rounded-[8px] border border-olive/14 bg-porcelain px-3 text-sm outline-none focus:border-champagne focus:ring-2 focus:ring-champagne/30'
                       />
                     </InputLabel>
@@ -1104,6 +1205,9 @@ export default function AdminDashboard ({
                               en: event.target.value
                             }
                           }))
+                        }
+                        onBlur={() =>
+                          void saveSiteContent('Pricing autosaved.')
                         }
                         className='h-11 w-full rounded-[8px] border border-olive/14 bg-porcelain px-3 text-sm outline-none focus:border-champagne focus:ring-2 focus:ring-champagne/30'
                       />
@@ -1156,12 +1260,22 @@ export default function AdminDashboard ({
                   gallery layout.
                 </p>
               </div>
-              <SaveButton
-                disabled={savingSiteContent}
-                onClick={() => void saveSiteContent('Media saved.')}
-              >
-                Save media
-              </SaveButton>
+              <div className='flex flex-wrap gap-2'>
+                <button
+                  type='button'
+                  onClick={addGalleryImage}
+                  className='inline-flex h-11 items-center justify-center gap-2 rounded-full border border-olive/15 px-5 text-sm font-bold text-olive'
+                >
+                  <Plus className='h-4 w-4' aria-hidden='true' />
+                  Add gallery image
+                </button>
+                <SaveButton
+                  disabled={savingSiteContent}
+                  onClick={() => void saveSiteContent('Media saved.')}
+                >
+                  Save media
+                </SaveButton>
+              </div>
             </div>
 
             <div className='mt-6 grid gap-5'>
@@ -1193,21 +1307,39 @@ export default function AdminDashboard ({
                               {image.slot}
                             </p>
                           </div>
-                          <label className='inline-flex h-10 cursor-pointer items-center gap-2 rounded-full bg-olive px-4 text-sm font-bold text-ivory'>
-                            <Upload className='h-4 w-4' aria-hidden='true' />
-                            {uploadingSlot === image.slot
-                              ? 'Uploading...'
-                              : 'Upload'}
-                            <input
-                              type='file'
-                              accept='image/*'
-                              disabled={uploadingSlot === image.slot}
-                              onChange={event =>
-                                void uploadImage(index, event.target.files?.[0])
-                              }
-                              className='sr-only'
-                            />
-                          </label>
+                          <div className='flex flex-wrap gap-2'>
+                            <label className='inline-flex h-10 cursor-pointer items-center gap-2 rounded-full bg-olive px-4 text-sm font-bold text-ivory'>
+                              <Upload className='h-4 w-4' aria-hidden='true' />
+                              {uploadingSlot === image.slot
+                                ? 'Uploading...'
+                                : 'Upload'}
+                              <input
+                                type='file'
+                                accept='image/*'
+                                disabled={uploadingSlot === image.slot}
+                                onChange={event =>
+                                  void uploadImage(
+                                    index,
+                                    event.target.files?.[0]
+                                  )
+                                }
+                                className='sr-only'
+                              />
+                            </label>
+                            {isGalleryImage ? (
+                              <button
+                                type='button'
+                                onClick={() => removeGalleryImage(index)}
+                                className='inline-flex h-10 items-center gap-2 rounded-full border border-clay/25 px-4 text-sm font-bold text-clay'
+                              >
+                                <Trash2
+                                  className='h-4 w-4'
+                                  aria-hidden='true'
+                                />
+                                Remove
+                              </button>
+                            ) : null}
+                          </div>
                         </div>
                         <div className='mt-4 grid gap-4 lg:grid-cols-2'>
                           <InputLabel label='Admin label'>
@@ -1218,6 +1350,9 @@ export default function AdminDashboard ({
                                   ...current,
                                   label: event.target.value
                                 }))
+                              }
+                              onBlur={() =>
+                                void saveSiteContent('Media autosaved.')
                               }
                               className='h-11 w-full rounded-[8px] border border-olive/14 bg-porcelain px-3 text-sm outline-none focus:border-champagne focus:ring-2 focus:ring-champagne/30'
                             />
@@ -1230,6 +1365,9 @@ export default function AdminDashboard ({
                                   ...current,
                                   src: event.target.value
                                 }))
+                              }
+                              onBlur={() =>
+                                void saveSiteContent('Media autosaved.')
                               }
                               className='h-11 w-full rounded-[8px] border border-olive/14 bg-porcelain px-3 text-sm outline-none focus:border-champagne focus:ring-2 focus:ring-champagne/30'
                             />
@@ -1246,6 +1384,9 @@ export default function AdminDashboard ({
                                   }
                                 }))
                               }
+                              onBlur={() =>
+                                void saveSiteContent('Media autosaved.')
+                              }
                               className='h-11 w-full rounded-[8px] border border-olive/14 bg-porcelain px-3 text-sm outline-none focus:border-champagne focus:ring-2 focus:ring-champagne/30'
                             />
                           </InputLabel>
@@ -1260,6 +1401,9 @@ export default function AdminDashboard ({
                                     en: event.target.value
                                   }
                                 }))
+                              }
+                              onBlur={() =>
+                                void saveSiteContent('Media autosaved.')
                               }
                               className='h-11 w-full rounded-[8px] border border-olive/14 bg-porcelain px-3 text-sm outline-none focus:border-champagne focus:ring-2 focus:ring-champagne/30'
                             />

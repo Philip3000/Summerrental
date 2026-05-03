@@ -6,7 +6,7 @@ type FooterProps = {
 
 export default function Footer({ content }: FooterProps) {
   return (
-    <footer className="bg-dusk py-12 text-ivory">
+    <footer data-header-theme="dark" className="bg-dusk py-12 text-ivory">
       <div className="section-shell flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="font-serif text-3xl">{content.footer.title}</p>

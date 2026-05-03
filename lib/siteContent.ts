@@ -119,24 +119,63 @@ function mergePresentation(
   };
 }
 
-function mergeImages(content: Partial<SiteContent> | null | undefined) {
-  return defaultSiteContent.images.map((defaultImage) => {
-    const override = content?.images?.find((image) => image.slot === defaultImage.slot);
+function mergeImage(defaultImage: SiteImage, override: Partial<SiteImage> | undefined) {
+  if (!override?.src) {
+    return defaultImage;
+  }
 
-    if (!override?.src) {
-      return defaultImage;
-    }
+  return {
+    ...defaultImage,
+    ...override,
+    alt: {
+      ...defaultImage.alt,
+      ...override.alt,
+    },
+    presentation: mergePresentation(defaultImage.presentation, override.presentation),
+  };
+}
 
-    return {
-      ...defaultImage,
-      ...override,
+function normalizeGalleryImage(image: Partial<SiteImage>, index: number): SiteImage | null {
+  if (!image.slot?.startsWith("gallery-") || !image.src) {
+    return null;
+  }
+
+  const fallback = defaultSiteContent.images.find((item) => item.slot === "gallery-1");
+
+  return mergeImage(
+    {
+      slot: image.slot,
+      label: image.label ?? `Gallery image ${index + 1}`,
+      src: fallback?.src ?? defaultHeroImage,
       alt: {
-        ...defaultImage.alt,
-        ...override.alt,
+        da: fallback?.alt.da ?? "Casa Mimosa galleri billede",
+        en: fallback?.alt.en ?? "Casa Mimosa gallery image",
       },
-      presentation: mergePresentation(defaultImage.presentation, override.presentation),
-    };
-  });
+      presentation: createPresentation({
+        galleryLayout: index === 0 ? "feature" : "standard",
+      }),
+    },
+    image,
+  );
+}
+
+function mergeImages(content: Partial<SiteContent> | null | undefined) {
+  const fixedImages = defaultSiteContent.images
+    .filter((image) => !image.slot.startsWith("gallery-"))
+    .map((defaultImage) => {
+      const override = content?.images?.find((image) => image.slot === defaultImage.slot);
+      return mergeImage(defaultImage, override);
+    });
+  const savedGalleryImages = content?.images
+    ?.filter((image) => image.slot?.startsWith("gallery-"))
+    .map((image, index) => normalizeGalleryImage(image, index))
+    .filter(Boolean) as SiteImage[] | undefined;
+  const galleryImagesToUse =
+    savedGalleryImages?.length
+      ? savedGalleryImages
+      : defaultSiteContent.images.filter((image) => image.slot.startsWith("gallery-"));
+
+  return [...fixedImages, ...galleryImagesToUse];
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

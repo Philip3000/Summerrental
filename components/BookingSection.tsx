@@ -126,7 +126,7 @@ export default function BookingSection({
   }
 
   return (
-    <section id="booking" className="bg-ivory py-20 md:py-28">
+    <section id="booking" data-header-theme="light" className="bg-ivory py-20 md:py-28">
       <div className="section-shell grid gap-10 lg:grid-cols-[0.72fr_1fr] lg:items-start">
         <div className="lg:sticky lg:top-28">
           <p className="text-sm font-semibold uppercase text-champagne">

@@ -36,15 +36,9 @@ export const bookingActionSchema = z.object({
   adminNote: z.string().trim().max(1000).optional().default(""),
 });
 
-const siteImageSlotSchema = z.enum([
-  "hero",
-  "experience",
-  "location",
-  "gallery-1",
-  "gallery-2",
-  "gallery-3",
-  "gallery-4",
-  "gallery-5",
+const siteImageSlotSchema = z.union([
+  z.enum(["hero", "experience", "location"]),
+  z.string().regex(/^gallery-[a-z0-9-]+$/),
 ]);
 
 const siteImageHeightSchema = z.enum(["compact", "standard", "tall", "cinematic"]);

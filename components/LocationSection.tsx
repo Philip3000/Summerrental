@@ -20,7 +20,7 @@ export default function LocationSection({ content, language, siteContent }: Loca
   const image = getSiteImage(siteContent, "location");
 
   return (
-    <section id="location" className="bg-porcelain py-20 md:py-28">
+    <section id="location" data-header-theme="light" className="bg-porcelain py-20 md:py-28">
       <div className="section-shell grid gap-10 lg:grid-cols-[1fr_0.86fr] lg:items-center">
         <div>
           <p className="text-sm font-semibold uppercase text-champagne">

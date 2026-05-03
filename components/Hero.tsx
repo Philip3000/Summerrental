@@ -15,6 +15,7 @@ export default function Hero({ content, language, siteContent }: HeroProps) {
 
   return (
     <section
+      data-header-theme="dark"
       className="relative flex items-end overflow-hidden bg-olive pt-[var(--header-height)] text-ivory"
       style={{ minHeight: getHeroMinHeight(heroImage) }}
     >

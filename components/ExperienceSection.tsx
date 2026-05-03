@@ -24,7 +24,7 @@ export default function ExperienceSection({
   const image = getSiteImage(siteContent, "experience");
 
   return (
-    <section className="bg-ivory py-20 md:py-28">
+    <section data-header-theme="light" className="bg-ivory py-20 md:py-28">
       <div className="section-shell grid gap-10 lg:grid-cols-[0.82fr_1fr] lg:items-center">
         <div
           className="relative overflow-hidden rounded-[8px] bg-olive shadow-soft"

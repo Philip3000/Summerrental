@@ -10,7 +10,7 @@ const icons = [BedDouble, Bath, UsersRound, Waves];
 
 export default function VillaOverview({ content }: VillaOverviewProps) {
   return (
-    <section id="villa" className="bg-porcelain py-20 md:py-28">
+    <section id="villa" data-header-theme="light" className="bg-porcelain py-20 md:py-28">
       <div className="section-shell grid gap-12 lg:grid-cols-[1fr_0.78fr] lg:items-start">
         <motion.div
           initial={{ opacity: 0, y: 16 }}

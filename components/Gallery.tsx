@@ -13,7 +13,7 @@ export default function Gallery({ content, language, siteContent }: GalleryProps
   const galleryImages = siteContent.images.filter((image) => image.slot.startsWith("gallery-"));
 
   return (
-    <section id="gallery" className="bg-porcelain py-20 md:py-28">
+    <section id="gallery" data-header-theme="light" className="bg-porcelain py-20 md:py-28">
       <div className="section-shell">
         <div className="grid gap-8 lg:grid-cols-[0.8fr_1fr] lg:items-end">
           <div>

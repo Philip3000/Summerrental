@@ -34,7 +34,7 @@ const amenityIcons = [
 
 export default function Amenities ({ content }: AmenitiesProps) {
   return (
-    <section id='amenities' className='bg-ivory py-20 md:py-28'>
+    <section id='amenities' data-header-theme='light' className='bg-ivory py-20 md:py-28'>
       <div className='section-shell'>
         <div className='max-w-3xl'>
           <p className='text-sm font-semibold uppercase text-champagne'>

@@ -10,7 +10,7 @@ type PricingProps = {
 
 export default function Pricing({ content, language, pricing }: PricingProps) {
   return (
-    <section id="pricing" className="bg-olive py-20 text-ivory md:py-28">
+    <section id="pricing" data-header-theme="dark" className="bg-olive py-20 text-ivory md:py-28">
       <div className="section-shell">
         <div className="grid gap-8 lg:grid-cols-[0.82fr_1fr] lg:items-end">
           <div>

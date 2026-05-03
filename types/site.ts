@@ -6,11 +6,7 @@ export type SiteImageSlot =
   | "hero"
   | "experience"
   | "location"
-  | "gallery-1"
-  | "gallery-2"
-  | "gallery-3"
-  | "gallery-4"
-  | "gallery-5";
+  | `gallery-${string}`;
 
 export type SiteImageHeight = "compact" | "standard" | "tall" | "cinematic";
 export type SiteImageLayout = "standard" | "feature" | "wide" | "tall";
