@@ -40,7 +40,7 @@ export default function CasaMimosaApp({ siteContent, today }: CasaMimosaAppProps
         <ExperienceSection content={content} language={language} siteContent={siteContent} />
         <Gallery content={content} language={language} siteContent={siteContent} />
         <Amenities content={content} />
-        <LocationSection content={content} language={language} siteContent={siteContent} />
+        <LocationSection content={content} />
         <Pricing content={content} language={language} pricing={siteContent.pricing} />
         <BookingSection
           content={content}

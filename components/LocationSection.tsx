@@ -1,23 +1,19 @@
-import { Car, MapPin, Plane, Utensils } from "lucide-react";
-import Image from "next/image";
-import type { Language, SiteCopy } from "@/lib/i18n";
-import {
-  getImageObjectPosition,
-  getSectionImageMinHeight,
-  getSiteImage,
-} from "@/lib/siteContent";
-import type { SiteContent } from "@/types/site";
+import { Car, ExternalLink, Flag, MapPin, Plane, Utensils, Waves } from "lucide-react";
+import type { SiteCopy } from "@/lib/i18n";
 
 type LocationSectionProps = {
   content: SiteCopy;
-  language: Language;
-  siteContent: SiteContent;
 };
 
 const icons = [MapPin, Utensils, Car, Plane];
+const areaIcons = [Waves, Utensils, Flag, Car];
+const defaultMapAddress = "Calle Mimosa De Sierrezuela 16, Mijas, Spain";
 
-export default function LocationSection({ content, language, siteContent }: LocationSectionProps) {
-  const image = getSiteImage(siteContent, "location");
+export default function LocationSection({ content }: LocationSectionProps) {
+  const mapAddress = content.location.address || defaultMapAddress;
+  const encodedMapAddress = encodeURIComponent(mapAddress);
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedMapAddress}`;
+  const googleMapsEmbedUrl = `https://www.google.com/maps?q=${encodedMapAddress}&output=embed`;
 
   return (
     <section id="location" data-header-theme="light" className="bg-porcelain py-20 md:py-28">
@@ -42,20 +38,59 @@ export default function LocationSection({ content, language, siteContent }: Loca
               );
             })}
           </div>
+          <div className="mt-10 rounded-[8px] border border-olive/10 bg-ivory p-5 shadow-line">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-champagne">
+              {content.location.areaEyebrow}
+            </p>
+            <h3 className="mt-3 font-serif text-3xl leading-tight text-olive">
+              {content.location.areaTitle}
+            </h3>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              {content.location.areaItems.map((item, index) => {
+                const Icon = areaIcons[index] ?? MapPin;
+
+                return (
+                  <article className="border-t border-olive/12 pt-4" key={item.title}>
+                    <Icon className="h-5 w-5 text-champagne" aria-hidden="true" />
+                    <h4 className="mt-3 text-sm font-bold uppercase text-olive">
+                      {item.title}
+                    </h4>
+                    <p className="mt-2 text-sm leading-6 text-ink/68">{item.description}</p>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
-        <div
-          className="relative overflow-hidden rounded-[8px] bg-olive shadow-soft"
-          style={{ minHeight: getSectionImageMinHeight(image) }}
-        >
-          <Image
-            src={image?.src ?? ""}
-            alt={image?.alt[language] ?? "Costa del Sol coastline near Fuengirola and Mijas"}
-            fill
-            sizes="(min-width: 1024px) 42vw, 100vw"
-            className="object-cover"
-            style={{ objectPosition: getImageObjectPosition(image) }}
-          />
+        <div className="overflow-hidden rounded-[8px] border border-olive/10 bg-ivory p-3 shadow-soft">
+          <div className="relative min-h-[440px] overflow-hidden rounded-[8px] bg-sand">
+            <iframe
+              title="Casa Mimosa location on Google Maps"
+              src={googleMapsEmbedUrl}
+              className="absolute inset-0 h-full w-full"
+              loading="lazy"
+              allowFullScreen
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+          <div className="flex flex-col gap-3 px-2 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase text-champagne">
+                {content.location.mapLabel}
+              </p>
+              <p className="mt-1 text-sm font-semibold text-olive">{mapAddress}</p>
+            </div>
+            <a
+              href={googleMapsUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-olive/15 px-4 text-sm font-bold text-olive transition hover:border-champagne hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-champagne"
+            >
+              {content.location.mapCta}
+              <ExternalLink className="h-4 w-4" aria-hidden="true" />
+            </a>
+          </div>
         </div>
       </div>
     </section>

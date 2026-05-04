@@ -37,7 +37,7 @@ export const bookingActionSchema = z.object({
 });
 
 const siteImageSlotSchema = z.union([
-  z.enum(["hero", "experience", "location"]),
+  z.enum(["hero", "experience"]),
   z.string().regex(/^gallery-[a-z0-9-]+$/),
 ]);
 

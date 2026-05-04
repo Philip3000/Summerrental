@@ -5,7 +5,6 @@ import type { SeasonPrice } from "@/lib/pricing";
 export type SiteImageSlot =
   | "hero"
   | "experience"
-  | "location"
   | `gallery-${string}`;
 
 export type SiteImageHeight = "compact" | "standard" | "tall" | "cinematic";

@@ -155,6 +155,29 @@ export const copy = {
         'Roligt villaområde med privat karakter',
         'Tæt på Fuengirola, Mijas og stranden',
         'God base for stranddage, golf og udflugter'
+      ],
+      address: 'Calle Mimosa De Sierrezuela 16, Mijas',
+      mapLabel: 'Placering',
+      mapCta: 'Åbn i Google Maps',
+      areaEyebrow: 'Området',
+      areaTitle: 'Det bedste af Costa del Sol inden for rækkevidde.',
+      areaItems: [
+        {
+          title: 'Strand og hav',
+          description: 'Kysten, strandklubber og rolige morgenture langs vandet ligger naturligt i dagens rytme.'
+        },
+        {
+          title: 'Middage ude',
+          description: 'Fuengirola, Mijas og nærliggende kystbyer giver adgang til alt fra afslappede tapas til mere raffinerede aftener.'
+        },
+        {
+          title: 'Golf og dagsture',
+          description: 'Området er et stærkt udgangspunkt for golf, hvide landsbyer, Marbella, Málaga og klassiske andalusiske udflugter.'
+        },
+        {
+          title: 'Rolig base',
+          description: 'Sierrazuela føles privat og tilbagetrukket, men stadig tæt på det, man faktisk rejser til Costa del Sol for.'
+        }
       ]
     },
     pricing: {
@@ -325,6 +348,29 @@ export const copy = {
         'Quiet villa area with a private character',
         'Close to Fuengirola, Mijas and the beach',
         'A strong base for beach days, golf and exploring'
+      ],
+      address: 'Calle Mimosa De Sierrezuela 16, Mijas',
+      mapLabel: 'Location',
+      mapCta: 'Open in Google Maps',
+      areaEyebrow: 'The area',
+      areaTitle: 'The best of the Costa del Sol within easy reach.',
+      areaItems: [
+        {
+          title: 'Beach and sea',
+          description: 'The coast, beach clubs and quiet morning walks by the water fit naturally into the day.'
+        },
+        {
+          title: 'Dinner out',
+          description: 'Fuengirola, Mijas and nearby coastal towns offer everything from relaxed tapas to more refined evenings.'
+        },
+        {
+          title: 'Golf and day trips',
+          description: 'The area is a strong base for golf, white villages, Marbella, Málaga and classic Andalusian excursions.'
+        },
+        {
+          title: 'Calm base',
+          description: 'Sierrazuela feels private and tucked away, while staying close to what brings people to the Costa del Sol.'
+        }
       ]
     },
     pricing: {

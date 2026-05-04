@@ -17,9 +17,6 @@ export const defaultHeroImage =
 export const defaultExperienceImage =
   "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1500&q=86";
 
-export const defaultLocationImage =
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1500&q=86";
-
 const defaultCopy = copy as unknown as SiteCopyByLanguage;
 
 const defaultPresentation: SiteImagePresentation = {
@@ -59,16 +56,6 @@ export const defaultSiteContent: SiteContent = {
         en: "Warm designer villa interior",
       },
       presentation: createPresentation({ height: "tall" }),
-    },
-    {
-      slot: "location",
-      label: "Location image",
-      src: defaultLocationImage,
-      alt: {
-        da: "Costa del Sol kysten ved Fuengirola og Mijas",
-        en: "Costa del Sol coastline near Fuengirola and Mijas",
-      },
-      presentation: createPresentation({ height: "tall", focalY: 45 }),
     },
     ...galleryImages.map<SiteImage>((image, index) => ({
       slot: `gallery-${index + 1}` as SiteImageSlot,
