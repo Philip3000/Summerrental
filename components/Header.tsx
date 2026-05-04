@@ -292,7 +292,7 @@ export default function Header ({
         >
           <span
             className={[
-              'relative h-10 w-10 shrink-0 overflow-hidden rounded-full border shadow-soft transition-colors duration-300',
+              'relative h-[52px] w-[52px] shrink-0 overflow-hidden rounded-full border shadow-soft transition-colors duration-300',
               isDark
                 ? 'border-ivory/40 bg-ivory'
                 : 'border-champagne/50 bg-olive/10'

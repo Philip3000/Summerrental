@@ -18,18 +18,19 @@ export default function Hero({ content, language, siteContent }: HeroProps) {
       data-header-theme="dark"
       className="relative flex items-end overflow-hidden bg-olive pt-[var(--header-height)] text-ivory"
       style={{ minHeight: getHeroMinHeight(heroImage) }}
-    >
-      <Image
-        src={heroImage?.src ?? ""}
-        alt={heroImage?.alt[language] ?? "Casa Mimosa private villa"}
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover"
-        style={{ objectPosition: getImageObjectPosition(heroImage) }}
-      />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(32,37,30,0.76),rgba(32,37,30,0.36)_46%,rgba(32,37,30,0.2)),linear-gradient(180deg,rgba(32,37,30,0.2),rgba(32,37,30,0.68))]" />
+    ><Image
+  src={heroImage?.src ?? ""}
+  alt={heroImage?.alt[language] ?? "Casa Mimosa private villa"}
+  fill
+  priority
+  sizes="100vw"
+  className="object-cover brightness-[1.08] contrast-[1.06] saturate-[1.08]"
+  style={{ objectPosition: getImageObjectPosition(heroImage) }}
+/>
 
+<div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(32,37,30,0.68)_0%,rgba(32,37,30,0.42)_34%,rgba(32,37,30,0.14)_62%,rgba(32,37,30,0.04)_100%)]" />
+
+<div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(180deg,rgba(32,37,30,0)_0%,rgba(32,37,30,0.42)_100%)]" />
       <div className="section-shell relative z-10 pb-10 pt-24 md:pb-14">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
