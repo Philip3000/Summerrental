@@ -1,7 +1,7 @@
 "use client";
 
-import { Banknote, CheckCircle2, KeyRound, Send, UsersRound } from "lucide-react";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Banknote, CheckCircle2, Eye, EyeOff, KeyRound, Send, UsersRound } from "lucide-react";
+import { type CSSProperties, type FormEvent, useEffect, useMemo, useState } from "react";
 import BookingCalendar from "@/components/BookingCalendar";
 import { rangesOverlap } from "@/lib/dateRanges";
 import type { Language, SiteCopy } from "@/lib/i18n";
@@ -34,6 +34,7 @@ export default function BookingSection({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [privateCode, setPrivateCode] = useState("");
+  const [showPrivateCode, setShowPrivateCode] = useState(false);
   const [message, setMessage] = useState("");
   const [reservedPeriods, setReservedPeriods] = useState<PublicAvailabilityPeriod[]>([]);
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
@@ -273,14 +274,43 @@ export default function BookingSection({
                 <KeyRound className="h-4 w-4 text-champagne" aria-hidden="true" />
                 {content.booking.privateCode}
               </span>
-              <input
-                type="password"
-                autoComplete="off"
-                value={privateCode}
-                onChange={(event) => setPrivateCode(event.target.value)}
-                placeholder={content.booking.privateCodePlaceholder}
-                className="h-12 w-full rounded-[8px] border border-olive/14 bg-ivory px-4 text-ink outline-none transition placeholder:text-ink/38 focus:border-champagne focus:ring-2 focus:ring-champagne/30"
-              />
+              <span className="relative block">
+                <input
+                  type="text"
+                  name="booking-code"
+                  autoComplete="one-time-code"
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  data-1p-ignore="true"
+                  data-bwignore="true"
+                  data-lpignore="true"
+                  value={privateCode}
+                  onChange={(event) => setPrivateCode(event.target.value)}
+                  placeholder={content.booking.privateCodePlaceholder}
+                  className="h-12 w-full rounded-[8px] border border-olive/14 bg-ivory px-4 pr-12 text-ink outline-none transition placeholder:text-ink/38 focus:border-champagne focus:ring-2 focus:ring-champagne/30"
+                  style={{
+                    WebkitTextSecurity: showPrivateCode || !privateCode ? "none" : "disc",
+                  } as CSSProperties & { WebkitTextSecurity?: string }}
+                />
+                <button
+                  type="button"
+                  aria-label={
+                    showPrivateCode
+                      ? content.booking.hidePrivateCode
+                      : content.booking.showPrivateCode
+                  }
+                  aria-pressed={showPrivateCode}
+                  onClick={() => setShowPrivateCode((current) => !current)}
+                  className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-olive/66 transition hover:bg-olive/8 hover:text-olive focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-champagne"
+                >
+                  {showPrivateCode ? (
+                    <EyeOff className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <Eye className="h-4 w-4" aria-hidden="true" />
+                  )}
+                </button>
+              </span>
             </label>
 
             <label className="block md:col-span-2">

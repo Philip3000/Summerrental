@@ -37,7 +37,7 @@ export default function Pricing({ content, language, pricing }: PricingProps) {
               <p className="mt-8 font-serif text-4xl text-ivory">
                 {content.pricing.from} {formatDkk(season.dkkPerDay)}
               </p>
-              <p className="mt-2 text-sm text-ivory/58">/ {content.pricing.perDay}</p>
+              <p className="mt-2 text-sm text-ivory/58"> {content.pricing.perDay}</p>
             </article>
           ))}
         </div>

@@ -10,7 +10,7 @@ import {
   query,
   serverTimestamp,
   setDoc,
-} from "firebase/firestore";
+} from "firebase/firestore/lite";
 import { getFirebaseServerDb } from "@/lib/firebaseServer";
 import type { PrivateAccessKind } from "@/lib/privateAccess";
 import type { AccessCodeKind, AccessCodeListItem, AccessCodeRecord } from "@/types/access";

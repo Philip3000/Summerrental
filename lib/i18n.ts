@@ -200,6 +200,8 @@ export const copy = {
       privateCode: 'Bookingkode',
       privateCodePlaceholder: 'Valgfri',
       privateCodeHelp: 'Har du modtaget en kode, kan du skrive den her.',
+      showPrivateCode: 'Vis bookingkode',
+      hidePrivateCode: 'Skjul bookingkode',
       privateCodeError:
         'Koden kunne ikke bruges. Tjek den, eller send uden kode.',
       periodLabel: 'Vælg periode',
@@ -393,6 +395,8 @@ export const copy = {
       privateCode: 'Private code',
       privateCodePlaceholder: 'Optional',
       privateCodeHelp: 'If you have received a code, you can enter it here.',
+      showPrivateCode: 'Show private code',
+      hidePrivateCode: 'Hide private code',
       privateCodeError:
         'The code could not be used. Check it, or send without a code.',
       periodLabel: 'Choose period',
