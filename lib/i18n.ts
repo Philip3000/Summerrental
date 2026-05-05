@@ -198,8 +198,9 @@ export const copy = {
       name: 'Navn',
       email: 'Email',
       privateCode: 'Bookingkode',
-      privateCodePlaceholder: 'Valgfri',
-      privateCodeHelp: 'Har du modtaget en kode, kan du skrive den her.',
+      privateCodePlaceholder: 'Skriv din bookingkode',
+      privateCodeHelp: 'En bookingkode er påkrævet for at reservere datoer.',
+      privateCodeRequired: 'Indtast en bookingkode for at reservere datoer.',
       showPrivateCode: 'Vis bookingkode',
       hidePrivateCode: 'Skjul bookingkode',
       privateCodeError:
@@ -393,8 +394,9 @@ export const copy = {
       name: 'Name',
       email: 'Email',
       privateCode: 'Private code',
-      privateCodePlaceholder: 'Optional',
-      privateCodeHelp: 'If you have received a code, you can enter it here.',
+      privateCodePlaceholder: 'Enter your private code',
+      privateCodeHelp: 'A private code is required to reserve dates.',
+      privateCodeRequired: 'Enter a private code to reserve dates.',
       showPrivateCode: 'Show private code',
       hidePrivateCode: 'Hide private code',
       privateCodeError:

@@ -39,15 +39,31 @@ export default function BookingSection({
   const [reservedPeriods, setReservedPeriods] = useState<PublicAvailabilityPeriod[]>([]);
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
 
+  const privateCodePlaceholder =
+    content.booking.privateCodePlaceholder === "Valgfri" ||
+    content.booking.privateCodePlaceholder === "Optional"
+      ? content.booking.privateCode
+      : content.booking.privateCodePlaceholder;
+
   const estimate = useMemo(
     () => calculateStayEstimate(arrivalDate, departureDate, pricing),
     [arrivalDate, departureDate, pricing],
   );
   const estimatedPrice = estimate.total;
   const hasDateError = Boolean(arrivalDate && departureDate && estimate.nights === 0);
-  const selectedDatesBlocked = reservedPeriods.some((period) =>
-    rangesOverlap(arrivalDate, departureDate, period.arrivalDate, period.departureDate),
-  );
+  const hasCompleteDateRange = Boolean(arrivalDate && departureDate && estimate.nights > 0);
+  const hasPrivateCode = privateCode.trim().length > 0;
+  const selectedDatesBlocked =
+    hasCompleteDateRange &&
+    reservedPeriods.some((period) =>
+      rangesOverlap(arrivalDate, departureDate, period.arrivalDate, period.departureDate),
+    );
+  const submitDisabled =
+    submitState.status === "loading" ||
+    !hasCompleteDateRange ||
+    hasDateError ||
+    selectedDatesBlocked ||
+    !hasPrivateCode;
 
   useEffect(() => {
     let cancelled = false;
@@ -83,7 +99,14 @@ export default function BookingSection({
       return;
     }
 
+    if (!hasPrivateCode) {
+      setSubmitState({ status: "error", message: content.booking.privateCodeRequired });
+      return;
+    }
+
     setSubmitState({ status: "loading" });
+    const submittedArrivalDate = arrivalDate;
+    const submittedDepartureDate = departureDate;
 
     const response = await fetch("/api/booking-request", {
       method: "POST",
@@ -121,9 +144,16 @@ export default function BookingSection({
       const blockingStatus: PublicAvailabilityPeriod["status"] = data.status;
       setReservedPeriods((periods) => [
         ...periods,
-        { arrivalDate, departureDate, status: blockingStatus },
+        {
+          arrivalDate: submittedArrivalDate,
+          departureDate: submittedDepartureDate,
+          status: blockingStatus,
+        },
       ]);
     }
+
+    setArrivalDate("");
+    setDepartureDate("");
   }
 
   return (
@@ -181,28 +211,7 @@ export default function BookingSection({
                   : content.booking.availableStatus}
               </p>
             ) : null}
-            {reservedPeriods.length > 0 ? (
-              <div className="mt-6 border-t border-olive/10 pt-4">
-                <p className="text-sm font-semibold text-olive">{content.booking.calendarTitle}</p>
-                <div className="mt-3 space-y-2">
-                  {reservedPeriods.slice(0, 5).map((period) => (
-                    <div
-                      className="flex items-center justify-between gap-3 rounded-[8px] bg-ivory px-3 py-2 text-xs text-ink/62"
-                      key={`${period.arrivalDate}-${period.departureDate}-${period.status}`}
-                    >
-                      <span>
-                        {period.arrivalDate} - {period.departureDate}
-                      </span>
-                      <span className="font-semibold text-olive">
-                        {period.status === "booked"
-                          ? content.booking.bookedLabel
-                          : content.booking.reservedLabel}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
+            
           </div>
         </div>
 
@@ -276,6 +285,7 @@ export default function BookingSection({
               </span>
               <span className="relative block">
                 <input
+                  required
                   type="text"
                   name="booking-code"
                   autoComplete="one-time-code"
@@ -287,7 +297,7 @@ export default function BookingSection({
                   data-lpignore="true"
                   value={privateCode}
                   onChange={(event) => setPrivateCode(event.target.value)}
-                  placeholder={content.booking.privateCodePlaceholder}
+                  placeholder={privateCodePlaceholder}
                   className="h-12 w-full rounded-[8px] border border-olive/14 bg-ivory px-4 pr-12 text-ink outline-none transition placeholder:text-ink/38 focus:border-champagne focus:ring-2 focus:ring-champagne/30"
                   style={{
                     WebkitTextSecurity: showPrivateCode || !privateCode ? "none" : "disc",
@@ -310,6 +320,9 @@ export default function BookingSection({
                     <Eye className="h-4 w-4" aria-hidden="true" />
                   )}
                 </button>
+              </span>
+              <span className="mt-2 block text-xs leading-5 text-ink/52">
+                {content.booking.privateCodeRequired}
               </span>
             </label>
 
@@ -367,7 +380,7 @@ export default function BookingSection({
 
           <button
             type="submit"
-            disabled={submitState.status === "loading"}
+            disabled={submitDisabled}
             className="mt-7 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-olive px-6 text-sm font-bold text-ivory shadow-line transition hover:bg-dusk focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-champagne disabled:cursor-not-allowed disabled:opacity-65 md:w-auto"
           >
             <Send className="h-4 w-4" aria-hidden="true" />

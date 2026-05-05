@@ -14,7 +14,7 @@ import {
 } from "date-fns";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useState } from "react";
-import { eachNight, parseDateInput } from "@/lib/dateRanges";
+import { eachNight, parseDateInput, rangesOverlap } from "@/lib/dateRanges";
 import type { Language, SiteCopy } from "@/lib/i18n";
 import type { PublicAvailabilityPeriod } from "@/types/booking";
 
@@ -92,7 +92,16 @@ export default function BookingCalendar({
       return;
     }
 
-    onRangeChange(arrivalDate, format(addDays(day, 1), "yyyy-MM-dd"));
+    const nextDepartureDate = format(addDays(day, 1), "yyyy-MM-dd");
+    const rangeHasBlockedDates = periods.some((period) =>
+      rangesOverlap(arrivalDate, nextDepartureDate, period.arrivalDate, period.departureDate),
+    );
+
+    if (rangeHasBlockedDates) {
+      return;
+    }
+
+    onRangeChange(arrivalDate, nextDepartureDate);
   }
 
   return (
