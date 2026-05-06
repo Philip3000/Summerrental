@@ -3,6 +3,7 @@
 import { Banknote, CheckCircle2, Eye, EyeOff, KeyRound, Send, UsersRound } from "lucide-react";
 import { type CSSProperties, type FormEvent, useEffect, useMemo, useState } from "react";
 import BookingCalendar from "@/components/BookingCalendar";
+import { MINIMUM_STAY_NIGHTS } from "@/lib/bookingRules";
 import { rangesOverlap } from "@/lib/dateRanges";
 import type { Language, SiteCopy } from "@/lib/i18n";
 import { calculateStayEstimate, formatDkk } from "@/lib/pricing";
@@ -52,6 +53,8 @@ export default function BookingSection({
   const estimatedPrice = estimate.total;
   const hasDateError = Boolean(arrivalDate && departureDate && estimate.nights === 0);
   const hasCompleteDateRange = Boolean(arrivalDate && departureDate && estimate.nights > 0);
+  const hasMinimumStayError =
+    hasCompleteDateRange && estimate.nights < MINIMUM_STAY_NIGHTS;
   const hasPrivateCode = privateCode.trim().length > 0;
   const selectedDatesBlocked =
     hasCompleteDateRange &&
@@ -62,6 +65,7 @@ export default function BookingSection({
     submitState.status === "loading" ||
     !hasCompleteDateRange ||
     hasDateError ||
+    hasMinimumStayError ||
     selectedDatesBlocked ||
     !hasPrivateCode;
 
@@ -91,6 +95,11 @@ export default function BookingSection({
 
     if (estimate.nights <= 0) {
       setSubmitState({ status: "error", message: content.booking.rangeError });
+      return;
+    }
+
+    if (estimate.nights < MINIMUM_STAY_NIGHTS) {
+      setSubmitState({ status: "error", message: content.booking.minimumStayError });
       return;
     }
 
@@ -132,6 +141,10 @@ export default function BookingSection({
             ? content.booking.unavailableError
             : data?.code === "INVALID_PRIVATE_CODE"
             ? content.booking.privateCodeError
+            : data?.code === "MINIMUM_STAY"
+            ? content.booking.minimumStayError
+            : data?.code === "PRIVATE_CODE_REQUIRED"
+            ? content.booking.privateCodeRequired
             : data?.error ?? content.booking.error,
       });
       return;
@@ -203,11 +216,15 @@ export default function BookingSection({
               <p
                 className={[
                   "mt-5 rounded-[8px] px-4 py-3 text-sm font-semibold",
-                  selectedDatesBlocked ? "bg-clay/10 text-clay" : "bg-moss/12 text-olive",
+                  selectedDatesBlocked || hasMinimumStayError
+                    ? "bg-clay/10 text-clay"
+                    : "bg-moss/12 text-olive",
                 ].join(" ")}
               >
                 {selectedDatesBlocked
                   ? content.booking.unavailableStatus
+                  : hasMinimumStayError
+                  ? content.booking.minimumStayError
                   : content.booking.availableStatus}
               </p>
             ) : null}
@@ -349,6 +366,12 @@ export default function BookingSection({
           {!hasDateError && selectedDatesBlocked ? (
             <p className="mt-4 text-sm font-semibold text-clay" role="alert">
               {content.booking.unavailableError}
+            </p>
+          ) : null}
+
+          {!hasDateError && hasMinimumStayError ? (
+            <p className="mt-4 text-sm font-semibold text-clay" role="alert">
+              {content.booking.minimumStayError}
             </p>
           ) : null}
 

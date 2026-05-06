@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { parseDateInput } from "@/lib/dateRanges";
+import { MINIMUM_STAY_NIGHTS } from "@/lib/bookingRules";
+import { getNights, parseDateInput } from "@/lib/dateRanges";
 
 const dateInput = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -12,7 +13,7 @@ export const bookingRequestSchema = z
     departureDate: dateInput,
     guests: z.coerce.number().int().min(1).max(8),
     message: z.string().trim().max(2000).optional().default(""),
-    privateCode: z.string().trim().max(80).optional().default(""),
+    privateCode: z.string().trim().min(1, "PRIVATE_CODE_REQUIRED").max(80),
   })
   .superRefine((value, context) => {
     const arrival = parseDateInput(value.arrivalDate);
@@ -23,6 +24,15 @@ export const bookingRequestSchema = z
         code: "custom",
         path: ["departureDate"],
         message: "Departure date must be after arrival date.",
+      });
+      return;
+    }
+
+    if (getNights(value.arrivalDate, value.departureDate) < MINIMUM_STAY_NIGHTS) {
+      context.addIssue({
+        code: "custom",
+        path: ["departureDate"],
+        message: "MINIMUM_STAY",
       });
     }
   });

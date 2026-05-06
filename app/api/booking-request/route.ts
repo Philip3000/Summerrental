@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { resolveAccessCodeKind } from "@/lib/accessCodeStore";
+import { MINIMUM_STAY_NIGHTS } from "@/lib/bookingRules";
 import { createBooking, getSiteContent } from "@/lib/bookingStore";
 import { calculateStayEstimate } from "@/lib/pricing";
 import { bookingRequestSchema } from "@/lib/validation";
@@ -12,11 +13,24 @@ export async function POST(request: Request) {
   const parsed = bookingRequestSchema.safeParse(body);
 
   if (!parsed.success) {
+    const issues = parsed.error.flatten().fieldErrors;
+    const isMinimumStayError = issues.departureDate?.includes("MINIMUM_STAY");
+    const isPrivateCodeRequiredError = issues.privateCode?.includes("PRIVATE_CODE_REQUIRED");
+
     return NextResponse.json(
       {
         success: false,
-        error: "Invalid booking request.",
-        issues: parsed.error.flatten().fieldErrors,
+        code: isMinimumStayError
+          ? "MINIMUM_STAY"
+          : isPrivateCodeRequiredError
+            ? "PRIVATE_CODE_REQUIRED"
+            : "INVALID_BOOKING_REQUEST",
+        error: isMinimumStayError
+          ? `The stay must be at least ${MINIMUM_STAY_NIGHTS} nights.`
+          : isPrivateCodeRequiredError
+            ? "A private code is required to reserve dates."
+            : "Invalid booking request.",
+        issues,
       },
       { status: 400 },
     );

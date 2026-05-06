@@ -204,7 +204,7 @@ export const copy = {
       showPrivateCode: 'Vis bookingkode',
       hidePrivateCode: 'Skjul bookingkode',
       privateCodeError:
-        'Koden kunne ikke bruges. Tjek den, eller send uden kode.',
+        'Koden kunne ikke bruges.',
       periodLabel: 'Vælg periode',
       periodHelp: 'Klik første dag og derefter sidste overnatningsdag.',
       previousMonth: 'Forrige måned',
@@ -231,7 +231,8 @@ export const copy = {
         'Tak. Vi har modtaget dine datoer og vender tilbage personligt.',
       reservedBody: 'Datoerne er registreret. Du får en personlig opfølgning.',
       error: 'Noget gik galt. Prøv igen om lidt.',
-      rangeError: 'Vælg en afrejsedato efter ankomstdatoen.'
+      rangeError: 'Vælg en afrejsedato efter ankomstdatoen.',
+      minimumStayError: 'Ophold skal være mindst 7 nætter.'
     },
     footer: {
       title: 'Casa Mimosa',
@@ -400,7 +401,7 @@ export const copy = {
       showPrivateCode: 'Show private code',
       hidePrivateCode: 'Hide private code',
       privateCodeError:
-        'The code could not be used. Check it, or send without a code.',
+        'The code could not be used.',
       periodLabel: 'Choose period',
       periodHelp: 'Click the first day, then the final overnight date.',
       previousMonth: 'Previous month',
@@ -428,7 +429,8 @@ export const copy = {
       reservedBody:
         'The dates have been registered. You will receive a personal follow-up.',
       error: 'Something went wrong. Please try again shortly.',
-      rangeError: 'Choose a departure date after the arrival date.'
+      rangeError: 'Choose a departure date after the arrival date.',
+      minimumStayError: 'Stays must be at least 7 nights.'
     },
     footer: {
       title: 'Casa Mimosa',

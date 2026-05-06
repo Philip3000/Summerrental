@@ -299,7 +299,7 @@ export default function Header ({
             ].join(' ')}
           >
             <Image
-              src='/margueritev7.PNG'
+              src='/margueritev7.png'
               alt='Casa Mimosa emblem'
               fill
               sizes='40px'
