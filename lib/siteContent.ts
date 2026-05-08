@@ -17,6 +17,12 @@ export const defaultHeroImage =
 export const defaultExperienceImage =
   "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1500&q=86";
 
+export const defaultExcursionsImage =
+  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1800&q=86";
+
+export const defaultInventoryImage =
+  "https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=1800&q=86";
+
 const defaultCopy = copy as unknown as SiteCopyByLanguage;
 
 const defaultPresentation: SiteImagePresentation = {
@@ -56,6 +62,26 @@ export const defaultSiteContent: SiteContent = {
         en: "Warm designer villa interior",
       },
       presentation: createPresentation({ height: "tall" }),
+    },
+    {
+      slot: "excursions",
+      label: "Excursions page image",
+      src: defaultExcursionsImage,
+      alt: {
+        da: "Costa del Sol kyst og lys som udgangspunkt for udflugter",
+        en: "Costa del Sol coastline and light for excursions",
+      },
+      presentation: createPresentation({ height: "cinematic", focalY: 52 }),
+    },
+    {
+      slot: "inventory",
+      label: "Inventory page image",
+      src: defaultInventoryImage,
+      alt: {
+        da: "Elegant køkken og interiørdetaljer i et privat hjem",
+        en: "Elegant kitchen and interior details in a private home",
+      },
+      presentation: createPresentation({ height: "cinematic", focalY: 50 }),
     },
     ...galleryImages.map<SiteImage>((image, index) => ({
       slot: `gallery-${index + 1}` as SiteImageSlot,

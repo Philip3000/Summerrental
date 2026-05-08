@@ -105,6 +105,8 @@ const sectionNames: Record<string, string> = {
   gallery: 'Gallery',
   amenities: 'Amenities',
   location: 'Location',
+  guestGuideTeaser: 'Frontpage guide links',
+  guestGuide: 'Guide pages',
   pricing: 'Pricing copy',
   booking: 'Booking form',
   footer: 'Footer'
@@ -278,6 +280,28 @@ function humanize (value: string) {
 
 function getCopyFieldLabel (path: FieldPath) {
   const section = sectionNames[String(path[0])] ?? humanize(String(path[0]))
+
+  if (path[0] === 'guestGuide') {
+    const page = humanize(String(path[1]))
+
+    if (path[2] === 'groups' && typeof path[3] === 'number') {
+      const groupLabel = `${section}: ${page} group ${path[3] + 1}`
+
+      if (path[4] === 'links' && typeof path[5] === 'number') {
+        return `${groupLabel} link ${path[5] + 1} ${humanize(
+          String(path[6])
+        )}`
+      }
+
+      if (path[4] === 'items' && typeof path[5] === 'number') {
+        return `${groupLabel} item ${path[5] + 1}`
+      }
+
+      return `${groupLabel} ${humanize(String(path[path.length - 1]))}`
+    }
+
+    return `${section}: ${page} ${humanize(String(path[path.length - 1]))}`
+  }
 
   if (path[0] === 'amenities' && path[1] === 'items') {
     return `${section}: item ${Number(path[2]) + 1} ${humanize(
@@ -684,6 +708,209 @@ export default function AdminDashboard ({
     }))
   }
 
+  function updateGuideCopy (updater: (current: SiteCopy) => SiteCopy) {
+    return applySiteContentUpdate(current => ({
+      ...current,
+      copy: {
+        ...current.copy,
+        [editorLanguage]: updater(current.copy[editorLanguage])
+      }
+    }))
+  }
+
+  function addExcursionGroup () {
+    const nextContent = updateGuideCopy(current => ({
+      ...current,
+      guestGuide: {
+        ...current.guestGuide,
+        excursions: {
+          ...current.guestGuide.excursions,
+          groups: [
+            ...current.guestGuide.excursions.groups,
+            {
+              title: editorLanguage === 'da' ? 'Ny sektion' : 'New section',
+              description:
+                editorLanguage === 'da'
+                  ? 'Beskriv sektionen kort.'
+                  : 'Describe this section briefly.',
+              links: []
+            }
+          ]
+        }
+      }
+    }))
+
+    void saveSiteContent('Guide updated.', nextContent)
+  }
+
+  function removeExcursionGroup (groupIndex: number) {
+    const nextContent = updateGuideCopy(current => ({
+      ...current,
+      guestGuide: {
+        ...current.guestGuide,
+        excursions: {
+          ...current.guestGuide.excursions,
+          groups: current.guestGuide.excursions.groups.filter(
+            (_, index) => index !== groupIndex
+          )
+        }
+      }
+    }))
+
+    void saveSiteContent('Guide updated.', nextContent)
+  }
+
+  function addExcursionLink (groupIndex: number) {
+    const nextContent = updateGuideCopy(current => ({
+      ...current,
+      guestGuide: {
+        ...current.guestGuide,
+        excursions: {
+          ...current.guestGuide.excursions,
+          groups: current.guestGuide.excursions.groups.map((group, index) =>
+            index === groupIndex
+              ? {
+                  ...group,
+                  links: [
+                    ...group.links,
+                    {
+                      title: editorLanguage === 'da' ? 'Nyt link' : 'New link',
+                      eyebrow:
+                        editorLanguage === 'da'
+                          ? 'Officielt link'
+                          : 'Official link',
+                      description:
+                        editorLanguage === 'da'
+                          ? 'Beskriv stedet kort.'
+                          : 'Describe this place briefly.',
+                      href: 'https://example.com'
+                    }
+                  ]
+                }
+              : group
+          )
+        }
+      }
+    }))
+
+    void saveSiteContent('Guide updated.', nextContent)
+  }
+
+  function removeExcursionLink (groupIndex: number, linkIndex: number) {
+    const nextContent = updateGuideCopy(current => ({
+      ...current,
+      guestGuide: {
+        ...current.guestGuide,
+        excursions: {
+          ...current.guestGuide.excursions,
+          groups: current.guestGuide.excursions.groups.map((group, index) =>
+            index === groupIndex
+              ? {
+                  ...group,
+                  links: group.links.filter(
+                    (_, currentLinkIndex) => currentLinkIndex !== linkIndex
+                  )
+                }
+              : group
+          )
+        }
+      }
+    }))
+
+    void saveSiteContent('Guide updated.', nextContent)
+  }
+
+  function addInventoryGroup () {
+    const nextContent = updateGuideCopy(current => ({
+      ...current,
+      guestGuide: {
+        ...current.guestGuide,
+        inventory: {
+          ...current.guestGuide.inventory,
+          groups: [
+            ...current.guestGuide.inventory.groups,
+            {
+              title: editorLanguage === 'da' ? 'Ny kategori' : 'New category',
+              description:
+                editorLanguage === 'da'
+                  ? 'Beskriv kategorien kort.'
+                  : 'Describe this category briefly.',
+              items: []
+            }
+          ]
+        }
+      }
+    }))
+
+    void saveSiteContent('Guide updated.', nextContent)
+  }
+
+  function removeInventoryGroup (groupIndex: number) {
+    const nextContent = updateGuideCopy(current => ({
+      ...current,
+      guestGuide: {
+        ...current.guestGuide,
+        inventory: {
+          ...current.guestGuide.inventory,
+          groups: current.guestGuide.inventory.groups.filter(
+            (_, index) => index !== groupIndex
+          )
+        }
+      }
+    }))
+
+    void saveSiteContent('Guide updated.', nextContent)
+  }
+
+  function addInventoryItem (groupIndex: number) {
+    const nextContent = updateGuideCopy(current => ({
+      ...current,
+      guestGuide: {
+        ...current.guestGuide,
+        inventory: {
+          ...current.guestGuide.inventory,
+          groups: current.guestGuide.inventory.groups.map((group, index) =>
+            index === groupIndex
+              ? {
+                  ...group,
+                  items: [
+                    ...group.items,
+                    editorLanguage === 'da' ? 'Nyt punkt' : 'New item'
+                  ]
+                }
+              : group
+          )
+        }
+      }
+    }))
+
+    void saveSiteContent('Guide updated.', nextContent)
+  }
+
+  function removeInventoryItem (groupIndex: number, itemIndex: number) {
+    const nextContent = updateGuideCopy(current => ({
+      ...current,
+      guestGuide: {
+        ...current.guestGuide,
+        inventory: {
+          ...current.guestGuide.inventory,
+          groups: current.guestGuide.inventory.groups.map((group, index) =>
+            index === groupIndex
+              ? {
+                  ...group,
+                  items: group.items.filter(
+                    (_, currentItemIndex) => currentItemIndex !== itemIndex
+                  )
+                }
+              : group
+          )
+        }
+      }
+    }))
+
+    void saveSiteContent('Guide updated.', nextContent)
+  }
+
   function updatePricing (
     index: number,
     updater: (
@@ -1013,11 +1240,11 @@ export default function AdminDashboard ({
                   <FileText className='h-5 w-5' aria-hidden='true' />
                 </div>
                 <h2 className='mt-5 font-serif text-3xl text-olive'>
-                  Frontpage text
+                  Site text
                 </h2>
                 <p className='mt-2 text-sm leading-6 text-ink/62'>
-                  Edit every public text field on the frontpage. Switch language
-                  before editing.
+                  Edit public text across the frontpage, excursions page and
+                  inventory page. Switch language before editing.
                 </p>
               </div>
               <div className='flex flex-wrap gap-2'>
@@ -1083,6 +1310,18 @@ export default function AdminDashboard ({
                 </InputLabel>
               ))}
             </div>
+
+            <GuideStructureEditor
+              content={siteContent.copy[editorLanguage]}
+              onAddExcursionGroup={addExcursionGroup}
+              onAddExcursionLink={addExcursionLink}
+              onAddInventoryGroup={addInventoryGroup}
+              onAddInventoryItem={addInventoryItem}
+              onRemoveExcursionGroup={removeExcursionGroup}
+              onRemoveExcursionLink={removeExcursionLink}
+              onRemoveInventoryGroup={removeInventoryGroup}
+              onRemoveInventoryItem={removeInventoryItem}
+            />
           </section>
         ) : null}
 
@@ -1506,6 +1745,220 @@ export default function AdminDashboard ({
         ) : null}
       </div>
     </main>
+  )
+}
+
+function GuideStructureEditor ({
+  content,
+  onAddExcursionGroup,
+  onAddExcursionLink,
+  onAddInventoryGroup,
+  onAddInventoryItem,
+  onRemoveExcursionGroup,
+  onRemoveExcursionLink,
+  onRemoveInventoryGroup,
+  onRemoveInventoryItem
+}: {
+  content: SiteCopy
+  onAddExcursionGroup: () => void
+  onAddExcursionLink: (groupIndex: number) => void
+  onAddInventoryGroup: () => void
+  onAddInventoryItem: (groupIndex: number) => void
+  onRemoveExcursionGroup: (groupIndex: number) => void
+  onRemoveExcursionLink: (groupIndex: number, linkIndex: number) => void
+  onRemoveInventoryGroup: (groupIndex: number) => void
+  onRemoveInventoryItem: (groupIndex: number, itemIndex: number) => void
+}) {
+  return (
+    <div className='mt-8 border-t border-olive/10 pt-6'>
+      <div className='flex flex-col gap-4 md:flex-row md:items-end md:justify-between'>
+        <div>
+          <h3 className='font-serif text-2xl text-olive'>
+            Guide page list structure
+          </h3>
+          <p className='mt-2 max-w-2xl text-sm leading-6 text-ink/62'>
+            Add or remove the rows on the excursions and inventory pages here.
+            Edit the actual wording and URLs in the text fields above.
+          </p>
+        </div>
+      </div>
+
+      <div className='mt-5 grid gap-5 xl:grid-cols-2'>
+        <section className='rounded-[8px] border border-olive/10 bg-ivory p-5'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
+            <div>
+              <p className='text-xs font-bold uppercase text-champagne'>
+                Excursions
+              </p>
+              <h4 className='mt-1 font-serif text-2xl text-olive'>
+                Links and sections
+              </h4>
+            </div>
+            <StructureButton icon={<Plus className='h-4 w-4' aria-hidden='true' />} onClick={onAddExcursionGroup}>
+              Add section
+            </StructureButton>
+          </div>
+
+          <div className='mt-4 space-y-3'>
+            {content.guestGuide.excursions.groups.map((group, groupIndex) => (
+              <article
+                className='rounded-[8px] border border-olive/10 bg-porcelain p-4'
+                key={`excursion-${groupIndex}`}
+              >
+                <div className='flex items-start justify-between gap-3'>
+                  <div>
+                    <p className='font-semibold text-olive'>{group.title}</p>
+                    <p className='mt-1 text-xs text-ink/52'>
+                      {group.links.length} links
+                    </p>
+                  </div>
+                  <StructureButton
+                    disabled={content.guestGuide.excursions.groups.length <= 1}
+                    icon={<Trash2 className='h-4 w-4' aria-hidden='true' />}
+                    onClick={() => onRemoveExcursionGroup(groupIndex)}
+                    tone='danger'
+                  >
+                    Remove
+                  </StructureButton>
+                </div>
+
+                <div className='mt-3 space-y-2'>
+                  {group.links.map((link, linkIndex) => (
+                    <div
+                      className='flex items-center justify-between gap-3 rounded-[8px] bg-ivory px-3 py-2'
+                      key={`${link.href}-${linkIndex}`}
+                    >
+                      <div className='min-w-0'>
+                        <p className='truncate text-sm font-semibold text-ink'>
+                          {link.title}
+                        </p>
+                        <p className='truncate text-xs text-ink/50'>
+                          {link.href}
+                        </p>
+                      </div>
+                      <button
+                        type='button'
+                        onClick={() =>
+                          onRemoveExcursionLink(groupIndex, linkIndex)
+                        }
+                        className='shrink-0 rounded-full p-2 text-clay transition hover:bg-clay/10'
+                        aria-label={`Remove ${link.title}`}
+                      >
+                        <Trash2 className='h-4 w-4' aria-hidden='true' />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type='button'
+                  onClick={() => onAddExcursionLink(groupIndex)}
+                  className='mt-3 inline-flex h-10 items-center gap-2 rounded-full border border-olive/15 px-4 text-sm font-bold text-olive transition hover:bg-ivory'
+                >
+                  <Plus className='h-4 w-4' aria-hidden='true' />
+                  Add link
+                </button>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className='rounded-[8px] border border-olive/10 bg-ivory p-5'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
+            <div>
+              <p className='text-xs font-bold uppercase text-champagne'>
+                Inventory
+              </p>
+              <h4 className='mt-1 font-serif text-2xl text-olive'>
+                Categories and items
+              </h4>
+            </div>
+            <StructureButton icon={<Plus className='h-4 w-4' aria-hidden='true' />} onClick={onAddInventoryGroup}>
+              Add category
+            </StructureButton>
+          </div>
+
+          <div className='mt-4 space-y-3'>
+            {content.guestGuide.inventory.groups.map((group, groupIndex) => (
+              <article
+                className='rounded-[8px] border border-olive/10 bg-porcelain p-4'
+                key={`inventory-${groupIndex}`}
+              >
+                <div className='flex items-start justify-between gap-3'>
+                  <div>
+                    <p className='font-semibold text-olive'>{group.title}</p>
+                    <p className='mt-1 text-xs text-ink/52'>
+                      {group.items.length} items
+                    </p>
+                  </div>
+                  <StructureButton
+                    disabled={content.guestGuide.inventory.groups.length <= 1}
+                    icon={<Trash2 className='h-4 w-4' aria-hidden='true' />}
+                    onClick={() => onRemoveInventoryGroup(groupIndex)}
+                    tone='danger'
+                  >
+                    Remove
+                  </StructureButton>
+                </div>
+
+                <div className='mt-3 flex flex-wrap gap-2'>
+                  {group.items.map((item, itemIndex) => (
+                    <button
+                      type='button'
+                      onClick={() => onRemoveInventoryItem(groupIndex, itemIndex)}
+                      className='inline-flex max-w-full items-center gap-2 rounded-full bg-ivory px-3 py-2 text-xs font-semibold text-ink/70 transition hover:text-clay'
+                      key={`${item}-${itemIndex}`}
+                    >
+                      <span className='truncate'>{item}</span>
+                      <Trash2 className='h-3.5 w-3.5 shrink-0' aria-hidden='true' />
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  type='button'
+                  onClick={() => onAddInventoryItem(groupIndex)}
+                  className='mt-3 inline-flex h-10 items-center gap-2 rounded-full border border-olive/15 px-4 text-sm font-bold text-olive transition hover:bg-ivory'
+                >
+                  <Plus className='h-4 w-4' aria-hidden='true' />
+                  Add item
+                </button>
+              </article>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+  )
+}
+
+function StructureButton ({
+  children,
+  disabled,
+  icon,
+  onClick,
+  tone = 'default'
+}: {
+  children: ReactNode
+  disabled?: boolean
+  icon: ReactNode
+  onClick: () => void
+  tone?: 'default' | 'danger'
+}) {
+  return (
+    <button
+      type='button'
+      disabled={disabled}
+      onClick={onClick}
+      className={`inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-45 ${
+        tone === 'danger'
+          ? 'border-clay/25 text-clay hover:bg-clay/10'
+          : 'border-olive/15 text-olive hover:bg-porcelain'
+      }`}
+    >
+      {icon}
+      {children}
+    </button>
   )
 }
 
