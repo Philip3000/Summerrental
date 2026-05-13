@@ -47,12 +47,16 @@ export const bookingActionSchema = z.object({
 });
 
 const siteImageSlotSchema = z.union([
-  z.enum(["hero", "experience", "excursions", "inventory"]),
+  z.enum(["hero", "experience", "activities", "golf", "excursions", "inventory"]),
   z.string().regex(/^gallery-[a-z0-9-]+$/),
 ]);
 
 const siteImageHeightSchema = z.enum(["compact", "standard", "tall", "cinematic"]);
 const siteImageLayoutSchema = z.enum(["standard", "feature", "wide", "tall"]);
+const siteImageSrcSchema = z.union([
+  z.string().trim().url().max(2000),
+  z.string().trim().regex(/^\/[a-zA-Z0-9/_-]+\.(png|jpe?g|webp|avif)$/).max(300),
+]);
 
 const localizedTextSchema = z.object({
   da: z.string().trim().min(1).max(500),
@@ -65,7 +69,7 @@ export const siteContentSchema = z.object({
       z.object({
         slot: siteImageSlotSchema,
         label: z.string().trim().min(1).max(80),
-        src: z.string().trim().url().max(2000),
+        src: siteImageSrcSchema,
         alt: z.object({
           da: z.string().trim().min(1).max(300),
           en: z.string().trim().min(1).max(300),

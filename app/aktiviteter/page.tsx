@@ -5,9 +5,9 @@ import type { Language } from "@/lib/i18n";
 import { getSiteImage } from "@/lib/siteContent";
 
 export const metadata: Metadata = {
-  title: "Inventar | Casa Mimosa",
+  title: "Aktiviteter | Casa Mimosa",
   description:
-    "Oversigt over udstyr og inventar i Casa Mimosa: køkken, vask, grill, pool, terrasse, komfort og praktiske ting til opholdet.",
+    "Aktiviteter fra Casa Mimosa: golfbaner nær Mijas og Fuengirola, kystbyer, kultur, dagsture og officielle links.",
 };
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ function resolveLanguage(value: string | string[] | undefined): Language {
   return (Array.isArray(value) ? value[0] : value) === "en" ? "en" : "da";
 }
 
-export default async function InventoryPage({
+export default async function ActivitiesPage({
   searchParams,
 }: {
   searchParams: GuidePageSearchParams;
@@ -30,16 +30,19 @@ export default async function InventoryPage({
   const params = await searchParams;
   const language = resolveLanguage(params?.lang);
   const siteContent = await getSiteContent();
-  const content = siteContent.copy[language].guestGuide.inventory;
-  const image = getSiteImage(siteContent, "inventory");
+  const content = siteContent.copy[language].guestGuide.activities;
+  const image = getSiteImage(siteContent, "activities");
+  const golfImage = getSiteImage(siteContent, "golf");
 
   return (
     <GuidePage
-      kind="inventory"
+      kind="activities"
       language={language}
       content={content}
       image={image?.src ?? ""}
       imageAlt={image?.alt[language] ?? content.imageAlt}
+      golfImage={golfImage?.src ?? "/golf-ball-club-casa-mimosa.png"}
+      golfImageAlt={golfImage?.alt[language] ?? content.golf.imageAlt}
     />
   );
 }

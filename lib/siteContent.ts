@@ -17,8 +17,10 @@ export const defaultHeroImage =
 export const defaultExperienceImage =
   "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1500&q=86";
 
-export const defaultExcursionsImage =
+export const defaultActivitiesImage =
   "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1800&q=86";
+
+export const defaultGolfImage = "/golf-ball-club-casa-mimosa.png";
 
 export const defaultInventoryImage =
   "https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=1800&q=86";
@@ -64,14 +66,24 @@ export const defaultSiteContent: SiteContent = {
       presentation: createPresentation({ height: "tall" }),
     },
     {
-      slot: "excursions",
-      label: "Excursions page image",
-      src: defaultExcursionsImage,
+      slot: "activities",
+      label: "Activities page image",
+      src: defaultActivitiesImage,
       alt: {
-        da: "Costa del Sol kyst og lys som udgangspunkt for udflugter",
-        en: "Costa del Sol coastline and light for excursions",
+        da: "Costa del Sol kyst og lys som udgangspunkt for aktiviteter",
+        en: "Costa del Sol coastline and light for activities",
       },
       presentation: createPresentation({ height: "cinematic", focalY: 52 }),
+    },
+    {
+      slot: "golf",
+      label: "Golf image",
+      src: defaultGolfImage,
+      alt: {
+        da: "Golfbold og golfkølle i varmt middelhavslys",
+        en: "Golf ball and club head in warm Mediterranean light",
+      },
+      presentation: createPresentation({ height: "standard", focalX: 64, focalY: 58 }),
     },
     {
       slot: "inventory",
@@ -176,7 +188,11 @@ function mergeImages(content: Partial<SiteContent> | null | undefined) {
   const fixedImages = defaultSiteContent.images
     .filter((image) => !image.slot.startsWith("gallery-"))
     .map((defaultImage) => {
-      const override = content?.images?.find((image) => image.slot === defaultImage.slot);
+      const override =
+        content?.images?.find((image) => image.slot === defaultImage.slot) ??
+        (defaultImage.slot === "activities"
+          ? content?.images?.find((image) => image.slot === "excursions")
+          : undefined);
       return mergeImage(defaultImage, override);
     });
   const savedGalleryImages = content?.images

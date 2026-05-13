@@ -6,9 +6,10 @@ import BookingSection from "@/components/BookingSection";
 import ExperienceSection from "@/components/ExperienceSection";
 import Footer from "@/components/Footer";
 import Gallery from "@/components/Gallery";
-import GuestGuideTeasers from "@/components/GuestGuideTeasers";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
+import ActivitiesSection from "@/components/ActivitiesSection";
+import InventorySection from "@/components/InventorySection";
 import LocationSection from "@/components/LocationSection";
 import Pricing from "@/components/Pricing";
 import VillaOverview from "@/components/VillaOverview";
@@ -42,7 +43,8 @@ export default function CasaMimosaApp({ siteContent, today }: CasaMimosaAppProps
         <Gallery content={content} language={language} siteContent={siteContent} />
         <Amenities content={content} />
         <LocationSection content={content} />
-        <GuestGuideTeasers content={content} language={language} siteContent={siteContent} />
+        <ActivitiesSection content={content} language={language} siteContent={siteContent} />
+        <InventorySection content={content} language={language} siteContent={siteContent} />
         <Pricing content={content} language={language} pricing={siteContent.pricing} />
         <BookingSection
           content={content}

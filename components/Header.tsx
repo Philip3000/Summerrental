@@ -209,6 +209,8 @@ export default function Header ({
     ['#gallery', content.nav.gallery],
     ['#amenities', content.nav.amenities],
     ['#location', content.nav.location],
+    ['#activities', content.nav.activities],
+    ['#inventory', content.nav.inventory],
     ['#pricing', content.nav.pricing],
     ['#booking', content.nav.booking]
   ]

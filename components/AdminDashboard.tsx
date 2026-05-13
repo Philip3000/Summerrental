@@ -284,6 +284,34 @@ function getCopyFieldLabel (path: FieldPath) {
   if (path[0] === 'guestGuide') {
     const page = humanize(String(path[1]))
 
+    if (
+      path[1] === 'activities' &&
+      path[2] === 'golf' &&
+      path[3] === 'courses' &&
+      typeof path[4] === 'number'
+    ) {
+      return `${section}: Activities golf course ${path[4] + 1} ${humanize(
+        String(path[5])
+      )}`
+    }
+
+    if (
+      path[1] === 'activities' &&
+      path[2] === 'other' &&
+      path[3] === 'groups' &&
+      typeof path[4] === 'number'
+    ) {
+      const groupLabel = `${section}: Activities other group ${path[4] + 1}`
+
+      if (path[5] === 'links' && typeof path[6] === 'number') {
+        return `${groupLabel} link ${path[6] + 1} ${humanize(
+          String(path[7])
+        )}`
+      }
+
+      return `${groupLabel} ${humanize(String(path[path.length - 1]))}`
+    }
+
     if (path[2] === 'groups' && typeof path[3] === 'number') {
       const groupLabel = `${section}: ${page} group ${path[3] + 1}`
 
@@ -718,15 +746,67 @@ export default function AdminDashboard ({
     }))
   }
 
-  function addExcursionGroup () {
+  function addGolfCourse () {
     const nextContent = updateGuideCopy(current => ({
       ...current,
       guestGuide: {
         ...current.guestGuide,
-        excursions: {
-          ...current.guestGuide.excursions,
-          groups: [
-            ...current.guestGuide.excursions.groups,
+        activities: {
+          ...current.guestGuide.activities,
+          golf: {
+            ...current.guestGuide.activities.golf,
+            courses: [
+              ...current.guestGuide.activities.golf.courses,
+              {
+                title: editorLanguage === 'da' ? 'Ny golfbane' : 'New golf course',
+                eyebrow: editorLanguage === 'da' ? 'Golfbane' : 'Golf course',
+                description:
+                  editorLanguage === 'da'
+                    ? 'Beskriv banen kort.'
+                    : 'Describe this course briefly.',
+                href: 'https://example.com',
+                mapQuery: 'Golf course near Mijas'
+              }
+            ]
+          }
+        }
+      }
+    }))
+
+    void saveSiteContent('Guide updated.', nextContent)
+  }
+
+  function removeGolfCourse (courseIndex: number) {
+    const nextContent = updateGuideCopy(current => ({
+      ...current,
+      guestGuide: {
+        ...current.guestGuide,
+        activities: {
+          ...current.guestGuide.activities,
+          golf: {
+            ...current.guestGuide.activities.golf,
+            courses: current.guestGuide.activities.golf.courses.filter(
+              (_, index) => index !== courseIndex
+            )
+          }
+        }
+      }
+    }))
+
+    void saveSiteContent('Guide updated.', nextContent)
+  }
+
+  function addActivityGroup () {
+    const nextContent = updateGuideCopy(current => ({
+      ...current,
+      guestGuide: {
+        ...current.guestGuide,
+        activities: {
+          ...current.guestGuide.activities,
+          other: {
+            ...current.guestGuide.activities.other,
+            groups: [
+              ...current.guestGuide.activities.other.groups,
             {
               title: editorLanguage === 'da' ? 'Ny sektion' : 'New section',
               description:
@@ -735,7 +815,8 @@ export default function AdminDashboard ({
                   : 'Describe this section briefly.',
               links: []
             }
-          ]
+            ]
+          }
         }
       }
     }))
@@ -743,16 +824,19 @@ export default function AdminDashboard ({
     void saveSiteContent('Guide updated.', nextContent)
   }
 
-  function removeExcursionGroup (groupIndex: number) {
+  function removeActivityGroup (groupIndex: number) {
     const nextContent = updateGuideCopy(current => ({
       ...current,
       guestGuide: {
         ...current.guestGuide,
-        excursions: {
-          ...current.guestGuide.excursions,
-          groups: current.guestGuide.excursions.groups.filter(
-            (_, index) => index !== groupIndex
-          )
+        activities: {
+          ...current.guestGuide.activities,
+          other: {
+            ...current.guestGuide.activities.other,
+            groups: current.guestGuide.activities.other.groups.filter(
+              (_, index) => index !== groupIndex
+            )
+          }
         }
       }
     }))
@@ -760,35 +844,38 @@ export default function AdminDashboard ({
     void saveSiteContent('Guide updated.', nextContent)
   }
 
-  function addExcursionLink (groupIndex: number) {
+  function addActivityLink (groupIndex: number) {
     const nextContent = updateGuideCopy(current => ({
       ...current,
       guestGuide: {
         ...current.guestGuide,
-        excursions: {
-          ...current.guestGuide.excursions,
-          groups: current.guestGuide.excursions.groups.map((group, index) =>
-            index === groupIndex
-              ? {
-                  ...group,
-                  links: [
-                    ...group.links,
-                    {
-                      title: editorLanguage === 'da' ? 'Nyt link' : 'New link',
-                      eyebrow:
-                        editorLanguage === 'da'
-                          ? 'Officielt link'
-                          : 'Official link',
-                      description:
-                        editorLanguage === 'da'
-                          ? 'Beskriv stedet kort.'
-                          : 'Describe this place briefly.',
-                      href: 'https://example.com'
-                    }
-                  ]
-                }
-              : group
-          )
+        activities: {
+          ...current.guestGuide.activities,
+          other: {
+            ...current.guestGuide.activities.other,
+            groups: current.guestGuide.activities.other.groups.map((group, index) =>
+              index === groupIndex
+                ? {
+                    ...group,
+                    links: [
+                      ...group.links,
+                      {
+                        title: editorLanguage === 'da' ? 'Nyt link' : 'New link',
+                        eyebrow:
+                          editorLanguage === 'da'
+                            ? 'Officielt link'
+                            : 'Official link',
+                        description:
+                          editorLanguage === 'da'
+                            ? 'Beskriv stedet kort.'
+                            : 'Describe this place briefly.',
+                        href: 'https://example.com'
+                      }
+                    ]
+                  }
+                : group
+            )
+          }
         }
       }
     }))
@@ -796,23 +883,26 @@ export default function AdminDashboard ({
     void saveSiteContent('Guide updated.', nextContent)
   }
 
-  function removeExcursionLink (groupIndex: number, linkIndex: number) {
+  function removeActivityLink (groupIndex: number, linkIndex: number) {
     const nextContent = updateGuideCopy(current => ({
       ...current,
       guestGuide: {
         ...current.guestGuide,
-        excursions: {
-          ...current.guestGuide.excursions,
-          groups: current.guestGuide.excursions.groups.map((group, index) =>
-            index === groupIndex
-              ? {
-                  ...group,
-                  links: group.links.filter(
-                    (_, currentLinkIndex) => currentLinkIndex !== linkIndex
-                  )
-                }
-              : group
-          )
+        activities: {
+          ...current.guestGuide.activities,
+          other: {
+            ...current.guestGuide.activities.other,
+            groups: current.guestGuide.activities.other.groups.map((group, index) =>
+              index === groupIndex
+                ? {
+                    ...group,
+                    links: group.links.filter(
+                      (_, currentLinkIndex) => currentLinkIndex !== linkIndex
+                    )
+                  }
+                : group
+            )
+          }
         }
       }
     }))
@@ -1243,7 +1333,7 @@ export default function AdminDashboard ({
                   Site text
                 </h2>
                 <p className='mt-2 text-sm leading-6 text-ink/62'>
-                  Edit public text across the frontpage, excursions page and
+                  Edit public text across the frontpage, activities page and
                   inventory page. Switch language before editing.
                 </p>
               </div>
@@ -1313,12 +1403,14 @@ export default function AdminDashboard ({
 
             <GuideStructureEditor
               content={siteContent.copy[editorLanguage]}
-              onAddExcursionGroup={addExcursionGroup}
-              onAddExcursionLink={addExcursionLink}
+              onAddActivityGroup={addActivityGroup}
+              onAddActivityLink={addActivityLink}
+              onAddGolfCourse={addGolfCourse}
               onAddInventoryGroup={addInventoryGroup}
               onAddInventoryItem={addInventoryItem}
-              onRemoveExcursionGroup={removeExcursionGroup}
-              onRemoveExcursionLink={removeExcursionLink}
+              onRemoveActivityGroup={removeActivityGroup}
+              onRemoveActivityLink={removeActivityLink}
+              onRemoveGolfCourse={removeGolfCourse}
               onRemoveInventoryGroup={removeInventoryGroup}
               onRemoveInventoryItem={removeInventoryItem}
             />
@@ -1750,22 +1842,26 @@ export default function AdminDashboard ({
 
 function GuideStructureEditor ({
   content,
-  onAddExcursionGroup,
-  onAddExcursionLink,
+  onAddActivityGroup,
+  onAddActivityLink,
+  onAddGolfCourse,
   onAddInventoryGroup,
   onAddInventoryItem,
-  onRemoveExcursionGroup,
-  onRemoveExcursionLink,
+  onRemoveActivityGroup,
+  onRemoveActivityLink,
+  onRemoveGolfCourse,
   onRemoveInventoryGroup,
   onRemoveInventoryItem
 }: {
   content: SiteCopy
-  onAddExcursionGroup: () => void
-  onAddExcursionLink: (groupIndex: number) => void
+  onAddActivityGroup: () => void
+  onAddActivityLink: (groupIndex: number) => void
+  onAddGolfCourse: () => void
   onAddInventoryGroup: () => void
   onAddInventoryItem: (groupIndex: number) => void
-  onRemoveExcursionGroup: (groupIndex: number) => void
-  onRemoveExcursionLink: (groupIndex: number, linkIndex: number) => void
+  onRemoveActivityGroup: (groupIndex: number) => void
+  onRemoveActivityLink: (groupIndex: number, linkIndex: number) => void
+  onRemoveGolfCourse: (courseIndex: number) => void
   onRemoveInventoryGroup: (groupIndex: number) => void
   onRemoveInventoryItem: (groupIndex: number, itemIndex: number) => void
 }) {
@@ -1777,89 +1873,146 @@ function GuideStructureEditor ({
             Guide page list structure
           </h3>
           <p className='mt-2 max-w-2xl text-sm leading-6 text-ink/62'>
-            Add or remove the rows on the excursions and inventory pages here.
-            Edit the actual wording and URLs in the text fields above.
+            Add or remove golf courses, other activity links and inventory
+            rows here. Edit wording, URLs and map queries in the text fields
+            above.
           </p>
         </div>
       </div>
 
-      <div className='mt-5 grid gap-5 xl:grid-cols-2'>
+      <div className='mt-5 grid gap-5 xl:grid-cols-3'>
         <section className='rounded-[8px] border border-olive/10 bg-ivory p-5'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <div>
               <p className='text-xs font-bold uppercase text-champagne'>
-                Excursions
+                Golf
+              </p>
+              <h4 className='mt-1 font-serif text-2xl text-olive'>
+                Courses
+              </h4>
+            </div>
+            <StructureButton
+              icon={<Plus className='h-4 w-4' aria-hidden='true' />}
+              onClick={onAddGolfCourse}
+            >
+              Add course
+            </StructureButton>
+          </div>
+
+          <div className='mt-4 space-y-2'>
+            {content.guestGuide.activities.golf.courses.map(
+              (course, courseIndex) => (
+                <div
+                  className='flex items-center justify-between gap-3 rounded-[8px] bg-porcelain px-3 py-3'
+                  key={`${course.title}-${courseIndex}`}
+                >
+                  <div className='min-w-0'>
+                    <p className='truncate text-sm font-semibold text-olive'>
+                      {course.title}
+                    </p>
+                    <p className='truncate text-xs text-ink/50'>
+                      {course.href}
+                    </p>
+                  </div>
+                  <button
+                    type='button'
+                    onClick={() => onRemoveGolfCourse(courseIndex)}
+                    className='shrink-0 rounded-full p-2 text-clay transition hover:bg-clay/10'
+                    aria-label={`Remove ${course.title}`}
+                  >
+                    <Trash2 className='h-4 w-4' aria-hidden='true' />
+                  </button>
+                </div>
+              )
+            )}
+          </div>
+        </section>
+
+        <section className='rounded-[8px] border border-olive/10 bg-ivory p-5'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
+            <div>
+              <p className='text-xs font-bold uppercase text-champagne'>
+                Other activities
               </p>
               <h4 className='mt-1 font-serif text-2xl text-olive'>
                 Links and sections
               </h4>
             </div>
-            <StructureButton icon={<Plus className='h-4 w-4' aria-hidden='true' />} onClick={onAddExcursionGroup}>
+            <StructureButton
+              icon={<Plus className='h-4 w-4' aria-hidden='true' />}
+              onClick={onAddActivityGroup}
+            >
               Add section
             </StructureButton>
           </div>
 
           <div className='mt-4 space-y-3'>
-            {content.guestGuide.excursions.groups.map((group, groupIndex) => (
-              <article
-                className='rounded-[8px] border border-olive/10 bg-porcelain p-4'
-                key={`excursion-${groupIndex}`}
-              >
-                <div className='flex items-start justify-between gap-3'>
-                  <div>
-                    <p className='font-semibold text-olive'>{group.title}</p>
-                    <p className='mt-1 text-xs text-ink/52'>
-                      {group.links.length} links
-                    </p>
-                  </div>
-                  <StructureButton
-                    disabled={content.guestGuide.excursions.groups.length <= 1}
-                    icon={<Trash2 className='h-4 w-4' aria-hidden='true' />}
-                    onClick={() => onRemoveExcursionGroup(groupIndex)}
-                    tone='danger'
-                  >
-                    Remove
-                  </StructureButton>
-                </div>
-
-                <div className='mt-3 space-y-2'>
-                  {group.links.map((link, linkIndex) => (
-                    <div
-                      className='flex items-center justify-between gap-3 rounded-[8px] bg-ivory px-3 py-2'
-                      key={`${link.href}-${linkIndex}`}
-                    >
-                      <div className='min-w-0'>
-                        <p className='truncate text-sm font-semibold text-ink'>
-                          {link.title}
-                        </p>
-                        <p className='truncate text-xs text-ink/50'>
-                          {link.href}
-                        </p>
-                      </div>
-                      <button
-                        type='button'
-                        onClick={() =>
-                          onRemoveExcursionLink(groupIndex, linkIndex)
-                        }
-                        className='shrink-0 rounded-full p-2 text-clay transition hover:bg-clay/10'
-                        aria-label={`Remove ${link.title}`}
-                      >
-                        <Trash2 className='h-4 w-4' aria-hidden='true' />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                <button
-                  type='button'
-                  onClick={() => onAddExcursionLink(groupIndex)}
-                  className='mt-3 inline-flex h-10 items-center gap-2 rounded-full border border-olive/15 px-4 text-sm font-bold text-olive transition hover:bg-ivory'
+            {content.guestGuide.activities.other.groups.map(
+              (group, groupIndex) => (
+                <article
+                  className='rounded-[8px] border border-olive/10 bg-porcelain p-4'
+                  key={`activity-${groupIndex}`}
                 >
-                  <Plus className='h-4 w-4' aria-hidden='true' />
-                  Add link
-                </button>
-              </article>
-            ))}
+                  <div className='flex items-start justify-between gap-3'>
+                    <div>
+                      <p className='font-semibold text-olive'>{group.title}</p>
+                      <p className='mt-1 text-xs text-ink/52'>
+                        {group.links.length} links
+                      </p>
+                    </div>
+                    <StructureButton
+                      disabled={
+                        content.guestGuide.activities.other.groups.length <= 1
+                      }
+                      icon={
+                        <Trash2 className='h-4 w-4' aria-hidden='true' />
+                      }
+                      onClick={() => onRemoveActivityGroup(groupIndex)}
+                      tone='danger'
+                    >
+                      Remove
+                    </StructureButton>
+                  </div>
+
+                  <div className='mt-3 space-y-2'>
+                    {group.links.map((link, linkIndex) => (
+                      <div
+                        className='flex items-center justify-between gap-3 rounded-[8px] bg-ivory px-3 py-2'
+                        key={`${link.href}-${linkIndex}`}
+                      >
+                        <div className='min-w-0'>
+                          <p className='truncate text-sm font-semibold text-ink'>
+                            {link.title}
+                          </p>
+                          <p className='truncate text-xs text-ink/50'>
+                            {link.href}
+                          </p>
+                        </div>
+                        <button
+                          type='button'
+                          onClick={() =>
+                            onRemoveActivityLink(groupIndex, linkIndex)
+                          }
+                          className='shrink-0 rounded-full p-2 text-clay transition hover:bg-clay/10'
+                          aria-label={`Remove ${link.title}`}
+                        >
+                          <Trash2 className='h-4 w-4' aria-hidden='true' />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    type='button'
+                    onClick={() => onAddActivityLink(groupIndex)}
+                    className='mt-3 inline-flex h-10 items-center gap-2 rounded-full border border-olive/15 px-4 text-sm font-bold text-olive transition hover:bg-ivory'
+                  >
+                    <Plus className='h-4 w-4' aria-hidden='true' />
+                    Add link
+                  </button>
+                </article>
+              )
+            )}
           </div>
         </section>
 
@@ -1873,7 +2026,10 @@ function GuideStructureEditor ({
                 Categories and items
               </h4>
             </div>
-            <StructureButton icon={<Plus className='h-4 w-4' aria-hidden='true' />} onClick={onAddInventoryGroup}>
+            <StructureButton
+              icon={<Plus className='h-4 w-4' aria-hidden='true' />}
+              onClick={onAddInventoryGroup}
+            >
               Add category
             </StructureButton>
           </div>

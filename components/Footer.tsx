@@ -5,7 +5,7 @@ type FooterProps = {
   language: Language;
 };
 
-function guideHref(path: "/udflugter" | "/inventar", language: Language) {
+function guideHref(path: "/aktiviteter" | "/inventar", language: Language) {
   return language === "en" ? `${path}?lang=en` : path;
 }
 
@@ -19,10 +19,10 @@ export default function Footer({ content, language }: FooterProps) {
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
           <a
-            href={guideHref("/udflugter", language)}
+            href={guideHref("/aktiviteter", language)}
             className="inline-flex h-11 items-center justify-center rounded-full border border-ivory/18 px-5 text-sm font-bold text-ivory transition hover:border-champagne hover:text-champagne focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ivory"
           >
-            {content.footer.excursions}
+            {content.footer.activities}
           </a>
           <a
             href={guideHref("/inventar", language)}

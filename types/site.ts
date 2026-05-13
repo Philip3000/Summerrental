@@ -5,6 +5,8 @@ import type { SeasonPrice } from "@/lib/pricing";
 export type SiteImageSlot =
   | "hero"
   | "experience"
+  | "activities"
+  | "golf"
   | "excursions"
   | "inventory"
   | `gallery-${string}`;
