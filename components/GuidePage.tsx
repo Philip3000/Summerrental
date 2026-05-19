@@ -23,7 +23,7 @@ type GuideLabels = {
 const guideLabels: Record<Language, GuideLabels> = {
   da: {
     activities: "Aktiviteter",
-    back: "Casa Mimosa",
+    back: "Tilbage til forsiden",
     inventory: "Inventar",
     openGuide: "Åbn guide",
     officialSite: "Officiel side",
@@ -31,7 +31,7 @@ const guideLabels: Record<Language, GuideLabels> = {
   },
   en: {
     activities: "Activities",
-    back: "Casa Mimosa",
+    back: "Back to home",
     inventory: "Inventory",
     openGuide: "Open guide",
     officialSite: "Official site",
@@ -71,6 +71,7 @@ type GuidePageProps =
 
 export default function GuidePage(props: GuidePageProps) {
   const labels = guideLabels[props.language];
+  const backHref = props.kind === "activities" ? "/#activities" : "/#inventory";
 
   return (
     <main className="min-h-screen bg-ivory text-ink">
@@ -90,7 +91,7 @@ export default function GuidePage(props: GuidePageProps) {
             aria-label="Guide navigation"
           >
             <Link
-              href="/"
+              href={backHref}
               className="inline-flex h-11 items-center gap-2 rounded-full border border-ivory/35 bg-ivory/10 px-4 text-sm font-bold text-ivory backdrop-blur transition hover:bg-ivory/18 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ivory"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -129,12 +130,13 @@ export default function GuidePage(props: GuidePageProps) {
       {props.kind === "activities" ? (
         <ActivitiesGuide
           content={props.content}
+          backHref={backHref}
           golfImage={props.golfImage}
           golfImageAlt={props.golfImageAlt}
           labels={labels}
         />
       ) : (
-        <InventoryGuide groups={props.content.groups} />
+        <InventoryGuide groups={props.content.groups} labels={labels} backHref={backHref} />
       )}
     </main>
   );
@@ -166,11 +168,13 @@ function GuideTab({
 
 function ActivitiesGuide({
   content,
+  backHref,
   golfImage,
   golfImageAlt,
   labels,
 }: {
   content: SiteCopy["guestGuide"]["activities"];
+  backHref: string;
   golfImage: string;
   golfImageAlt: string;
   labels: GuideLabels;
@@ -179,6 +183,8 @@ function ActivitiesGuide({
     <>
       <section className="bg-ivory py-16 md:py-24" id="golf">
         <div className="section-shell">
+          <InlineBackLink href={backHref} label={labels.back} />
+
           <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
             <div>
               <p className="text-sm font-semibold uppercase text-champagne">
@@ -283,6 +289,8 @@ function ActivitiesGuide({
 
       <section className="bg-porcelain py-16 md:py-24" id="other-activities">
         <div className="section-shell space-y-14">
+          <InlineBackLink href={backHref} label={labels.back} />
+
           <div className="grid gap-6 lg:grid-cols-[0.45fr_1fr] lg:items-end">
             <div>
               <p className="text-sm font-semibold uppercase text-champagne">
@@ -349,13 +357,19 @@ function ActivitiesGuide({
 }
 
 function InventoryGuide({
+  backHref,
   groups,
+  labels,
 }: {
+  backHref: string;
   groups: SiteCopy["guestGuide"]["inventory"]["groups"];
+  labels: GuideLabels;
 }) {
   return (
     <section className="py-16 md:py-24">
       <div className="section-shell">
+        <InlineBackLink href={backHref} label={labels.back} />
+
         <div className="grid gap-5 lg:grid-cols-2">
           {groups.map((group, index) => {
             const Icon = inventoryIcons[index] ?? inventoryIcons[0]!;
@@ -392,5 +406,17 @@ function InventoryGuide({
         </div>
       </div>
     </section>
+  );
+}
+
+function InlineBackLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="mb-8 inline-flex h-11 items-center gap-2 rounded-full border border-olive/15 bg-porcelain px-4 text-sm font-bold text-olive transition hover:border-champagne hover:bg-ivory focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-champagne"
+    >
+      <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+      {label}
+    </Link>
   );
 }
